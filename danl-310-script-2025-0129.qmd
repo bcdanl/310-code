@@ -1,0 +1,495 @@
+---
+title: Lecture 3
+subtitle: "DANL 310: Introduction to Data Analytics"
+author: 
+  - name: Byeong-Hak Choe
+date: 2025-01-27
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 9
+  # fig-height: 5
+  
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: show       # https://quarto.org/docs/output-formats/html-code.html  
+    code-tools: true      # https://quarto.org/docs/reference/cells/cells-jupyter.html
+    highlight-style: atom-one # atom-one tango espresso
+---
+
+
+```{r}
+library(tidyverse)
+mpg <- mpg
+```
+
+
+
+
+```{r}
+ggplot(data = mpg,
+       mapping = aes(x = displ,
+                     y = hwy,
+                     color = class)) + # mpg is data frame from ggplot2 package
+  geom_point()
+```
+
+
+```{r}
+ggplot(data = mpg,
+       mapping = aes(x = displ,
+                     y = hwy,
+                     shape = class)) + # mpg is data frame from ggplot2 package
+  geom_point()
+```
+
+
+
+```{r}
+ggplot(data = mpg,
+       mapping = aes(x = displ,
+                     y = hwy,
+                     size = class)) + # mpg is data frame from ggplot2 package
+  geom_point()
+```
+
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ,
+                     y = hwy,
+                     alpha = class)) + # mpg is data frame from ggplot2 package
+  geom_point()
+```
+
+# Specifying aes property manually!
+
+```{r}
+ggplot(mpg,
+       aes(x = displ, y = hwy)) +
+  geom_point(alpha = .3)
+```
+
+
+
+```{r}
+ggplot(mpg,
+       aes(x = displ, y = hwy)) +
+  geom_point(color = "#CD826B")
+```
+
+
+
+```{r}
+ggplot(mpg,
+       aes(x = displ, y = hwy)) +
+  geom_point(shape = 2)
+```
+
+
+```{r}
+ggplot(mpg,
+       aes(x = displ, y = hwy)) +
+  geom_point(size = .1)
+```
+
+
+
+
+
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point( mapping = 
+                aes(x = displ, 
+                    y = hwy, 
+                    color = "blue") )
+```
+
+
+
+
+
+```{r}
+mpg <- mpg |> 
+  mutate(colour = "blue")
+```
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy,
+                color = colour)) +
+  geom_point()
+```
+
+
+
+```{r}
+ggplot(data = mpg) 
+ + geom_point( mapping = 
+                 aes(x = displ, 
+                     y = hwy) )
+```
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = 
+                 aes(x = displ, 
+                     y = hwy)) + 
+  geom_point()
+  + geom_smooth()
+```
+
+
+# Local vs Global aes mappings
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ, 
+                     y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+
+
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ, 
+                     y = hwy)) + 
+  geom_point(aes(color = class)) + 
+  geom_smooth()
+```
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ, 
+                     y = hwy,
+                     color = class)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+
+
+
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ, 
+                     y = hwy,
+                     color = class)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+
+
+```{r}
+
+ggplot(data = mpg,
+       mapping = aes(x = displ, 
+                     y = hwy,
+                     color = class)) + 
+  geom_point() + 
+  geom_smooth(aes(fill = class))
+```
+
+
+
+# Facets
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy), 
+             alpha = .5) + 
+  facet_wrap( ~ class, 
+              nrow = 3)
+```
+
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy), 
+             alpha = .5) + 
+  facet_wrap( ~ class, 
+              ncol = 5)
+```
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy), 
+             alpha = .5) + 
+  facet_wrap( ~ class, 
+              ncol = 5,
+              scales = "free_x")
+```
+
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy), 
+             alpha = .5) + 
+  facet_wrap( ~ class, 
+              ncol = 5,
+              scales = "free_y")
+```
+
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy), 
+             alpha = .5) + 
+  facet_wrap( ~ class, 
+              ncol = 5,
+              scales = "free")
+```
+
+# Facet vs Color
+
+ 
+```{r}
+ggplot(data = mpg,
+       mapping = 
+               aes(x = displ, 
+                   y = hwy)) + 
+  geom_point(alpha = .5) + 
+  geom_smooth(se = F, method = lm) +
+  facet_wrap( ~ class)
+```
+
+
+
+ 
+```{r}
+ggplot(data = mpg,
+       mapping = 
+               aes(x = displ, 
+                   y = hwy,
+                   color = class)) + 
+  geom_point(alpha = .5) + 
+  geom_smooth(se = F, method = lm)
+```
+
+
+
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(mapping = 
+                aes(x = displ, 
+                    y = hwy, 
+                    color = drv,
+                    fill = drv))
+```
+
+
+
+```{r}
+
+ggplot(data = mpg) +
+  geom_smooth(mapping = 
+                aes(x = displ, 
+                    y = hwy, 
+                    color = drv,
+                    fill = drv),
+              show.legend = F)
+```
+
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = 
+               aes(x = displ, 
+                   y = hwy),
+             alpha = .3) +
+  geom_smooth(mapping = 
+                aes(x = displ, 
+                    y = hwy)) +
+  geom_smooth(mapping = 
+                aes(x = displ, 
+                    y = hwy), 
+              method = lm, 
+              color = 'red')
+```
+
+```{r}
+ggplot(data = mpg,
+       mapping = 
+               aes(x = displ, 
+                   y = hwy)) + 
+  geom_point(alpha = .3) +
+  geom_smooth() +
+  geom_smooth(method = lm, 
+              color = 'red')
+```
+
+
+- We can use multiple data frames in one ggplot:
+
+
+
+```{r}
+ggplot(data = mpg, 
+       mapping = 
+         aes(x = displ, 
+             y = hwy)) + 
+  geom_point(mapping = 
+               aes(color = class), 
+             alpha = .5) + 
+  geom_smooth(data = 
+                filter(mpg, 
+                       class == "subcompact"), 
+              se = FALSE)
+```
+
+# STAT. TRANSFORMATION
+
+```{r}
+diamonds <- diamonds
+```
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price)) +
+  geom_histogram(color = 'blue',
+                 fill = 'white')
+```
+
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price)) +
+  geom_histogram(color = 'steelblue',
+                 fill = 'white',
+                 bins = 1000)
+```
+
+```{r}
+ggplot(diamonds,
+       aes(x = price)) +
+  geom_freqpoly(color = 'steelblue',
+                 bins = 1000)
+```
+
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price)) +
+  geom_freqpoly(bins = 100)
+```
+
+
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price)) +
+  geom_histogram(bins = 100)
+```
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price,
+           color = cut)) +
+  geom_freqpoly(bins = 100)
+```
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price,
+           color = cut)) +
+  geom_histogram(bins = 100)
+```
+
+
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price,
+           color = cut)) +
+  geom_freqpoly(bins = 100) +
+  facet_wrap(~cut)
+```
+
+
+
+
+
+```{r}
+ggplot(diamonds,
+       aes(x = price,
+           color = cut)) +
+  geom_histogram(bins = 100) +
+  facet_wrap(~cut)
+```
+
+
+# Log
+
+```{r}
+library(tidyverse)
+sale_df <- read_csv(
+  "https://bcdanl.github.io/data/home_sales_nyc.csv")
+```
+
+```{r}
+ggplot(sale_df,
+       aes(x = sale.price)) +
+  geom_histogram(color = 'black',
+                 fill = 'steelblue',
+                 bins = 200
+                 )
+```
+
+
+```{r}
+
+ggplot(sale_df,
+       aes(x = log10(sale.price))) +
+  geom_histogram(color = 'black',
+                 fill = 'steelblue',
+                 bins = 200
+                 )
+```
+
+
+
+
