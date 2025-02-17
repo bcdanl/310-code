@@ -224,7 +224,7 @@ by_country2 <- organdata |>
   ungroup()
 ```
 
-# CW 5.2
+# CW 5.2a
 
 ```{r}
 by_country2 |> 
@@ -238,7 +238,7 @@ by_country2 |>
 ```
 
 
-# CW 5.3
+# CW 5.2b
 ```{r}
 by_country2 |> 
   ggplot(aes(x = donors_mean,
