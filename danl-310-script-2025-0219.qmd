@@ -1,0 +1,362 @@
+---
+title: HW1; putting text
+subtitle: "DANL 310: Introduction to Data Analytics"
+author: 
+  - name: Byeong-Hak Choe
+date: 2025-02-19
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 9
+  # fig-height: 5
+  
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: show       # https://quarto.org/docs/output-formats/html-code.html  
+    code-tools: true      # https://quarto.org/docs/reference/cells/cells-jupyter.html
+    highlight-style: atom-one # atom-one tango espresso
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+library(gapminder)
+library(socviz) # textbook r package
+
+# To set default ggplot theme
+# theme_set(theme_fivethirtyeight() +
+#           theme(strip.background = element_rect(fill="lightgray"),
+#                 axis.title.x = 
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y = 
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+          # ) # theme_minimal() becomes default
+# scale_colour_discrete <- function(...) scale_color_tableau(...)
+# scale_fill_discrete <- function(...) scale_fill_tableau(...)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+# HW1
+
+
+```{r}
+ncdc_temp <- read_csv(
+  'https://bcdanl.github.io/data/ncdc_temp_cleaned.csv')
+```
+# Q1
+```{r}
+ggplot(ncdc_temp,
+       aes(x = date,
+           y = temperature)) +
+  geom_line(aes(color = location),
+            linewidth = 1.5) +
+  geom_point(data = ncdc_temp |> 
+               filter(month %in% c("01", "04", "07", "10"),
+                      day == 1)) +
+  scale_x_date(breaks = ymd(c("0000-01-01",
+                          "0000-04-01",
+                          "0000-07-01",
+                          "0000-10-01",
+                          "0000-12-31")),
+               labels = c("Jan", "Apr", "Jul", "Oct", "Jan")) +
+  scale_y_continuous(breaks = c(20,40,60,80,100),
+                     limits = c(20,105)) +
+  labs(x = "month",
+       y = "temperature (°F)") +
+  theme_minimal() +
+  theme(legend.title = element_text(hjust = .5) )
+```
+
+
+
+# Q2
+
+```{r}
+ncdc_temp |> 
+  ggplot(aes(x = month,
+             y = temperature)) +
+  geom_boxplot(fill = "grey90") +
+  labs(y = "mean temperature (°F)") +
+  ggthemes::theme_clean()
+```
+
+# Q3
+
+```{r}
+library(ggridges)
+
+ncdc_temp |> 
+  ggplot(aes(x = temperature,
+             y = month)) +
+  geom_density_ridges(fill = "#639dd1",
+                      color = "white",
+                      rel_min_height = 0.01
+                      ) +
+  scale_x_continuous(breaks = c(25, 50, 75)) +
+  theme_minimal()
+```
+
+# Q4
+
+```{r}
+mtcars <- datasets::mtcars
+```
+
+
+
+```{r}
+mtcars |> 
+  ggplot(aes(x = disp, y = mpg,
+             color = hp)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  theme_minimal()
+```
+
+
+# Q5
+
+```{r}
+popgrowth_df <- read_csv(
+  'https://bcdanl.github.io/data/popgrowth.csv')
+```
+
+```{r}
+popgrowth_df |> 
+  ggplot(aes(x = popgrowth,
+             y = reorder(state,popgrowth),
+             fill = region)) +
+  geom_col() +  # geom_bar(stat = "identity")
+  theme_minimal() +
+  theme(legend.position = c(0.75,0.5)) 
+  
+```
+
+
+# Q6
+
+```{r}
+male_Aus <- read_csv(
+  'https://bcdanl.github.io/data/aus_athletics_male.csv')
+```
+
+```{r}
+male_Aus |> 
+  ggplot(aes(x = height,
+             y = pcBfat,
+             color = sport,
+             shape = sport,
+             fill = sport)) +
+  geom_point(size = rel(2)) +
+  scale_shape_manual(values = 20:24) +
+  scale_color_manual(values = c("#E06666", "grey90","grey90","grey90","grey90")) +
+  scale_fill_manual(values = c("red", rep("grey",4))) +
+  theme_minimal() 
+```
+
+
+# Q7
+
+```{r}
+titanic <- read_csv(
+  'https://bcdanl.github.io/data/titanic_cleaned.csv')
+```
+```{r}
+titanic_female <- titanic |> 
+  mutate(gender_new = "all passengers",
+         gender = "female")
+titanic_male <- titanic |> 
+  mutate(gender_new = "all passengers",
+         gender = "male")
+
+new_df <- titanic_female |> 
+  rbind(titanic_male)
+
+ggplot(data = titanic |> 
+         mutate(gender_new = gender),
+       aes(x = age,
+           y = after_stat(count),
+           fill = gender_new)) +
+  geom_density(data = new_df,
+               color = "transparent") +
+  geom_density(color = "transparent",
+               bw = 2) +
+  facet_wrap(~gender) +
+  scale_fill_manual(values = c("grey80", "darkorange", "steelblue")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.justification = "right"
+  )
+```
+
+
+# Q8
+
+```{r}
+cows_filtered <- read_csv(
+  'https://bcdanl.github.io/data/cows_filtered.csv')
+```
+```{r}
+cows_filtered |> 
+  ggplot(aes(x = butterfat,
+             fill = breed,
+             color = breed)) +
+  geom_density(alpha = .3) +
+  scale_x_continuous(breaks = c(4,5,6),
+                     labels = c("4%", "5%", "6%")) +
+  theme_minimal()
+```
+
+
+```{r}
+cows_filtered |> 
+  ggplot(aes(x = butterfat,
+             fill = breed,
+             color = breed)) +
+  geom_density(alpha = .3) +
+  scale_x_continuous(labels = scales::percent_format(scale = 1)) +
+  theme_minimal()
+```
+
+
+# Adding text to ggplot
+
+```{r}
+
+organdata <- socviz::organdata
+by_country <- organdata |> 
+  group_by(consent_law, country) |>
+  summarize(donors_mean= mean(donors, na.rm = TRUE),
+            donors_sd = sd(donors, na.rm = TRUE),
+            gdp_mean = mean(gdp, na.rm = TRUE),
+            health_mean = mean(health, na.rm = TRUE),
+            roads_mean = mean(roads, na.rm = TRUE),
+            cerebvas_mean = mean(cerebvas, na.rm = TRUE))
+```
+
+
+
+```{r}
+ggplot(by_country,
+       aes(x = roads_mean,
+           y = donors_mean)) +
+  geom_point() +
+  geom_text(aes(label = country),
+            hjust = 1,
+            vjust = -.5)
+```
+
+
+```{r}
+socviz::elections_historic |> select(2:7) 
+```
+
+```{r}
+#| fig-width: 9
+#| fig-height: 9
+
+library(ggrepel)
+elections_historic <- elections_historic
+
+p <- ggplot(elections_historic, aes(x = popular_pct, y = ec_pct,
+                                    label = winner_label))
+
+p +
+  geom_point() +
+  geom_text_repel(box.padding = 1) +
+  theme_fivethirtyeight()
+```
+
+
+
+
+
+```{r}
+p <- ggplot(data = by_country,
+            mapping = 
+              aes(x = gdp_mean, 
+                  y = health_mean))
+
+p + geom_point() +
+    geom_text_repel(
+      data = filter(by_country, 
+                    gdp_mean > 25000),
+      mapping = 
+        aes(label = country))
+```
+
+
+```{r}
+# creating a dummy variable for labels
+organdata <- organdata |> 
+  mutate(ind = ccode %in% 
+                  c("Ita", "Spa") & 
+               year > 1998)  
+
+p <- ggplot(data = organdata,
+            mapping = 
+              aes(x = roads, 
+                  y = donors, 
+                  color = ind))
+p + 
+  geom_point() +
+  geom_text_repel(
+    data = filter(organdata, ind),
+    mapping = aes(label = ccode)) +
+  guides(label = "none", 
+         color = "none")
+```
+
+
+# CW 5.3
+
+```{r}
+mtcars <- datasets::mtcars
+mtcars <- mtcars %>%   # A native pipe (|>) does not work here.
+  mutate(car = rownames(.))
+rownames(mtcars) <- 1:nrow(mtcars)
+```
+
+
+```{r}
+mtcars |> 
+  ggplot(aes(x = wt, y = mpg)) +
+  geom_point(color = 'red') +
+  geom_text_repel(data = mtcars |> 
+                    filter(wt > 5),
+                  aes(label = car))
+```
+
+
+```{r}
+p <- ggplot(data = organdata, 
+            mapping = 
+              aes(x = roads, 
+                  y = donors))
+p + geom_point() + 
+  annotate(geom = "text", 
+           x = 91, y = 33,
+           label = "A surprisingly high \n recovery rate.",
+           hjust = 0)
+```
+
+
