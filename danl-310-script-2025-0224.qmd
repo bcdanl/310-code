@@ -217,7 +217,7 @@ electricity_new |>
 
 
 
-# Color Palete
+# Color Palette
 
 ```{r}
 # install.pacakges("RColorBrewer")
@@ -252,3 +252,5 @@ p + geom_point(size = 2,
                alpha = .5) +
   scale_color_brewer(palette = "Set2")
 ```
+
+
