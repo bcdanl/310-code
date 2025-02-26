@@ -1,0 +1,377 @@
+---
+title: "Feb 24, 2025 - Class Script"
+subtitle: "DANL 310: Introduction to Data Analytics"
+author: 
+  - name: Byeong-Hak Choe
+date: 2025-02-26
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 9
+  # fig-height: 5
+  
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: show       # https://quarto.org/docs/output-formats/html-code.html  
+    code-tools: true      # https://quarto.org/docs/reference/cells/cells-jupyter.html
+    highlight-style: atom-one # atom-one tango espresso
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+library(gapminder)
+library(socviz) # textbook r package
+
+# To set default ggplot theme
+# theme_set(theme_fivethirtyeight() +
+#           theme(strip.background = element_rect(fill="lightgray"),
+#                 axis.title.x = 
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y = 
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+          # ) # theme_minimal() becomes default
+# scale_color_discrete <- function(...) scale_color_tableau(...)
+# scale_fill_discrete <- function(...) scale_fill_tableau(...)
+```
+
+```{r}
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(socviz)
+library(ggthemes)
+```
+
+
+
+```{r}
+p <- ggplot(data = organdata,
+            mapping = 
+              aes(x = roads, 
+                  y = donors, 
+                  color = world))
+
+p + geom_point(size = 2) + 
+  scale_color_brewer(
+    palette = "Set2") +
+  theme(legend.position = "top")
+```
+
+```{r}
+p +
+  geom_point(size = 2) + 
+  scale_color_manual(values = 
+                       c("#3c6ff8", "#afd68d", "#8467ad", "#82857f")) +
+  theme_ipsum()
+
+```
+
+```{r}
+brewer.pal.info
+
+```
+
+```{r}
+# scale_color_colorblind()
+# scale_color_tableau()
+# 
+# scale_color_viridis_*()
+```
+
+
+```{r}
+county_data <- socviz::county_data
+```
+
+
+```{r}
+
+party_colors <- 
+  c("#2E74C0", "#CB454A") 
+
+p0 <- ggplot(
+  data = filter(county_data, 
+                flipped == "No"),
+  mapping = 
+    aes(x = pop, 
+        y = black/100) )
+```
+
+
+```{r}
+library(ggrepel)
+p0 +
+  geom_point(color = "grey70") +
+  geom_point(data = county_data |> 
+               filter(flipped == "Yes"),
+             aes(color = partywinner16)) +
+  geom_text_repel(
+    data = county_data |> 
+      filter(flipped == "Yes", black > 25),
+    aes(label = state)
+  ) +
+  scale_x_log10(labels = scales::comma) +
+  scale_color_manual(values = party_colors) +
+  scale_y_percent() + # scale_y_coninuous(labels = scales::percent)
+  labs(
+    color = 
+      "County flipped to ... ",
+    x = 
+      "County Population (log scale)",
+    y = 
+      "Percent Black Population",
+    title = 
+      "Flipped counties, 2016",
+    caption = 
+      "Counties in gray did not flip.") +
+  theme(legend.position = "top",
+        plot.title = element_text(hjust = .5,
+                                  color = "Brown",
+                                  face = "bold"))
+```
+
+```{r}
+
+p0 +
+  geom_point(color = "grey70") +
+  geom_point(data = county_data |> 
+               filter(flipped == "Yes"),
+             aes(color = partywinner16)) +
+  geom_text_repel(
+    data = county_data |> 
+      filter(flipped == "Yes", black > 25),
+    aes(label = state)
+  ) +
+  scale_x_log10(labels = scales::comma) +
+  scale_color_manual(values = party_colors) +
+  scale_y_percent() + # scale_y_coninuous(labels = scales::percent)
+  labs(
+    color = 
+      "County flipped to ... ",
+    x = 
+      "County Population (log scale)",
+    y = 
+      "Percent Black Population",
+    title = 
+      "Flipped counties, 2016",
+    caption = 
+      "Counties in gray did not flip.") + 
+  theme(
+  legend.position = "top",
+  plot.title = element_text(
+      size = rel(2),
+      lineheight = .5,
+      family = "Times",
+      face = "bold.italic",
+      color = "orange"),
+  axis.text.x = element_text(
+      size = rel(1.1),
+      family = "Courier",
+      face = "bold",
+      color = "purple"),
+  axis.text.y = element_text(
+      size = rel(1.1),
+      family = "Courier",
+      face = "bold",
+      color = "purple",
+      angle = 45)
+  )
+```
+
+
+
+```{r}
+gss_lon <- gss_lon
+```
+
+
+
+```{r}
+yrs <- c(seq(1972, 1988, 4), 
+         1993, 
+         seq(1996, 2016, 4))
+
+mean_age <- gss_lon |>
+    filter( !is.na(age), 
+            year %in% yrs) |>
+    group_by(year) |>
+    summarize(
+      xbar = round(
+        mean(age, na.rm = TRUE), 0)
+      )
+
+
+mean_age$y <- 0.3 
+
+yr_labs <- data.frame(
+  x = 85, y = 0.8, 
+  year = yrs)  # to position the age as a text label
+```
+
+
+
+```{r}
+p <- ggplot(
+  data = 
+    filter(gss_lon, year %in% yrs),
+  mapping = 
+    aes(x = age))
+
+p1 <- p + 
+  geom_density(
+    fill = "black", color = FALSE,
+    alpha = 0.9, 
+    mapping = aes(y = ..scaled..))
+p1+ 
+  geom_vline(
+    data = filter(
+      mean_age, year %in% yrs),
+    aes(xintercept = xbar), 
+    color = "white", size = 0.5)
+```
+```{r}
+#| fig-height: 12
+p2 <- p1 + 
+  geom_vline(
+    data = filter(
+      mean_age, year %in% yrs),
+    aes(xintercept = xbar), 
+    color = "white", size = 0.5) + 
+  geom_text(
+    data = filter(mean_age, 
+             year %in% yrs),
+    aes(x = xbar, y = y, label = xbar), 
+    nudge_x = 7.5, color = "white", 
+    size = 3.5, hjust = 1) +
+  geom_text(data = filter(
+    yr_labs, year %in% yrs),
+    aes(x = x, y = y, label = year)) 
+
+p2a <- p2 +
+    facet_grid(year ~ ., switch = "y") +
+  theme(
+    plot.title = 
+      element_text(size = 16),
+    axis.text.x= 
+      element_text(size = 12),
+    axis.title.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y = element_blank(),
+    strip.background = element_blank(),
+    strip.text.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()) +
+  labs(x = "Age", y = NULL,
+       title = 
+         "Age Distribution of\nGSS Respondents")
+
+p2a
+```
+
+```{r}
+#| fig-height: 12
+
+library(ggridges)
+p <- ggplot(
+  data = gss_lon,
+  mapping = 
+    aes(x = age, 
+        y = factor(year, 
+                   levels = rev(unique(year)), 
+                   ordered = TRUE)))
+
+p2b <- p + 
+  geom_density_ridges(
+    alpha = 0.6, fill = "lightblue", 
+    scale = 1.5) +  
+    scale_x_continuous(
+      breaks = c(25, 50, 75)) +
+    scale_y_discrete(
+      expand = c(0.01, 0)) + 
+    labs(x = "Age", y = NULL, 
+         title = 
+           "Age Distribution of\nGSS Respondents") +
+    theme_ridges() +  # make labels aligned properly
+    theme(
+      title = 
+        element_text(
+          size = 16, face = "bold"))
+p2b
+```
+
+
+
+
+```{r}
+#| fig-height: 12
+# install.packages("gridExtra")
+library(gridExtra)
+grid.arrange(p2a, p2b, nrow = 1)   # sub-figures
+```
+
+
+
+```{r}
+studebt <- studebt
+```
+
+
+
+```{r}
+studebt
+
+p_xlab <- "Amount Owed, in thousands of Dollars"
+p_title <- "Outstanding Student Loans"
+p_subtitle <- "44 million borrowers owe a total of $1.3 trillion"
+p_caption <- "Source: FRB NY"
+
+f_labs <- c(`Borrowers` = "Percent of\nall Borrowers",
+            `Balances` = "Percent of\nall Balances")
+```
+
+```{r}
+p <- ggplot(data = studebt,
+            aes(x = pct/100, y = Debt,
+                fill = type))
+
+p +
+  geom_col() +
+  scale_fill_brewer(
+    type = "qual", palette = "Dark2") +
+  scale_x_percent()
+
+```
+```{r}
+p <- ggplot(
+  studebt, 
+  aes(x = pct/100, y = type, 
+      fill = Debtrc))
+p1 <- p + 
+  geom_col(color = "gray80")
+p1
+```
+
+
+```{r}
+n_tweets_long <- read_csv(
+  'https://bcdanl.github.io/data/n_tweets_long.csv')
+```
+
+
+
+
