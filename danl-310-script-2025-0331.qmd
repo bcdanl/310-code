@@ -1,0 +1,131 @@
+---
+title: "March 31, 2025 - Class Script"
+subtitle: "DANL 310: Introduction to Data Analytics"
+author: 
+  - name: Byeong-Hak Choe
+date: 2025-03-31
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 9
+  # fig-height: 5
+  
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: show       # https://quarto.org/docs/output-formats/html-code.html  
+    code-tools: true      # https://quarto.org/docs/reference/cells/cells-jupyter.html
+    highlight-style: atom-one # atom-one tango espresso
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+library(socviz) # textbook r package
+# To set default ggplot theme
+# theme_set(theme_fivethirtyeight() +
+#           theme(strip.background = element_rect(fill="lightgray"),
+#                 axis.title.x = 
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y = 
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+          # ) # theme_minimal() becomes default
+# scale_color_discrete <- function(...) scale_color_tableau(...)
+# scale_fill_discrete <- function(...) scale_fill_tableau(...)
+```
+
+# Classwork 7 - Question 4
+
+```{r}
+holiday_movies <- read_csv("https://bcdanl.github.io/data/holiday_movies.csv")
+holiday_movie_genres <- read_csv("https://bcdanl.github.io/data/holiday_movie_genres.csv")
+```
+
+## Q4a
+
+Provide the R code to generate the data.frame, holiday_movie_with_genres, which combines the two data.frames, holiday_movies and holiday_movie_genres:
+
+
+```{r}
+holiday_movie_with_genres <- holiday_movie_genres |> 
+  left_join(holiday_movies)
+```
+
+
+
+
+
+
+## Q4b
+Provide the R code using skimr::skim() to see how the summary statistics—mean, median, standard deviation, minimum, maximum, first and third quartiles—of `average_rating` and `num_votes` varies by popular genres and `title_type`.
+
+Consider only the five popular genres, which are selected in terms of the number of titles for each `genre`.
+Removes the video type of the titles when calculating the summary statistics.
+
+```{r}
+popular_genres <- holiday_movie_genres |> 
+  count(genres) |> 
+  mutate(ranking = dense_rank(-n)) |> 
+  filter(ranking <= 5)
+
+unique(holiday_movie_with_genres$title_type)
+
+
+q4b <- holiday_movie_with_genres |> 
+  filter(genres %in% popular_genres$genres,
+         title_type != "video") |> 
+  group_by(genres, title_type) |> 
+  skim(average_rating, num_votes)
+
+```
+
+
+
+## Q4c
+
+Provide R code to recreate the ggplot figure illustrating how the relationship between log10(num_votes) and average_rating varies by the popular genres and title_type.
+
+The five popular genres are selected in terms of the number of titles for each genre.
+The video type of the titles are removed in the ggplot figure.
+
+
+```{r}
+holiday_movie_with_genres |> 
+  filter(genres %in% popular_genres$genres,
+         title_type != "video") |> 
+  ggplot(aes(x = log10(num_votes),
+             y = average_rating)) +
+  geom_point(alpha = .2) +
+  geom_smooth(aes(color = genres,
+                  fill = genres),
+              method = 'lm') +
+  facet_grid(title_type ~ genres,
+             scale = 'free_y')
+```
+
+
+## Q4d
+Provide a comment to illustrate how the relationship between log10(num_votes) and average_rating varies by the popular genres and title_type.
+
+- For Romance, the association is positive, for both movie and tvMovie
+- For Family, the association is positive for movie, but is negative for tvMovie.
+
+
+
+
+
+
+
