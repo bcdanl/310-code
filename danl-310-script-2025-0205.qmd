@@ -208,7 +208,7 @@ ggplot(flights) +
   geom_bar(aes(y = name,
                fill = origin)) 
 ```
-- we can also consider soting this bar chart above.
+- we can also consider sorting this bar chart above.
 
 
 
