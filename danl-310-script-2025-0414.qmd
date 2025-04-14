@@ -392,7 +392,7 @@ ggplot() +
 ```{r}
 library(ggmap)
 library(gmapsdistance)
-google_api <- "AIzaSyA3GEXp7zdSJBAhq8fw30f5z-STVFrZSa0"
+google_api <- "YOUR_GOOGLE_MAPS_API_KEY"
 register_google(google_api) # for the ggmap package
 set.api.key(google_api)     # for the gmapsdistance package
 ```
