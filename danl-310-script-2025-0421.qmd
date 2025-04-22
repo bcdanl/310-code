@@ -1,0 +1,590 @@
+---
+title: "April 21, 2025 - Class Script"
+subtitle: "DANL 310: Introduction to Data Analytics"
+author: 
+  - name: Byeong-Hak Choe
+date: 2025-04-21
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 9
+  # fig-height: 5
+  
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-fold: show       # https://quarto.org/docs/output-formats/html-code.html  
+    code-tools: true      # https://quarto.org/docs/reference/cells/cells-jupyter.html
+    highlight-style: atom-one # atom-one tango espresso
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+library(socviz) # textbook r package
+# To set default ggplot theme
+# theme_set(theme_fivethirtyeight() +
+#           theme(strip.background = element_rect(fill="lightgray"),
+#                 axis.title.x = 
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y = 
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+          # ) # theme_minimal() becomes default
+# scale_color_discrete <- function(...) scale_color_tableau(...)
+# scale_fill_discrete <- function(...) scale_fill_tableau(...)
+```
+
+# Plotting Google Maps with `ggmap`
+
+```{r}
+library(ggmap)
+# library(gmapsdistance)
+google_api <- "GOOGLE_MAP_API"
+
+register_google(google_api) # for the ggmap package
+# set.api.key(google_api)     # for the gmapsdistance package
+```
+
+
+```{r}
+Denver_Map <- get_map("Denver, CO", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 10)
+
+ggmap(Denver_Map) +
+  theme_map() 
+```
+
+
+
+```{r}
+NYC_Map <- get_map("New York City", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 13)
+
+ggmap(NYC_Map) +
+  theme_map() 
+```
+
+
+
+
+```{r}
+ggmap(NYC_Map)
+```
+
+```{r}
+ROC_Map <- get_map("Rochester, NY", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 9) # the larger value, the more zoom-in
+
+ggmap(ROC_Map) +
+  theme_map()
+```
+
+
+```{r}
+
+Geneseo_Map <- get_map("Geneseo, NY", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 14) # the larger value, the more zoom-in
+
+ggmap(Geneseo_Map) +
+  theme_map()
+```
+
+
+
+```{r}
+library(ggrepel)
+locations <- geocode(
+  c("South Hall, Geneseo, NY", 
+    "Newton Hall, Geneseo, NY")
+)
+
+locations <- locations |>
+  mutate(label = c("South Hall", "Newton Hall"))
+
+ggmap(Geneseo_Map) + 
+  geom_point(data = locations, size = 1, alpha = .5) +
+  geom_label_repel(data = locations, 
+                  aes(label = label),
+                  box.padding = 1.75) +
+  theme_map()
+```
+
+```{r}
+library(showtext)
+font_add_google("Roboto", "roboto")
+font_add_google("Lato", "lato")
+font_add_google("Poppins", "poppins")
+font_add_google("Nunito", "nunito")
+font_add_google("Annie Use Your Telescope", "annie")
+font_add_google("Pacifico", "pacifico")
+showtext_auto()  # Enables Google fonts in R plots.
+```
+
+
+```{r}
+ggmap(Geneseo_Map) + 
+  geom_point(data = locations, size = 1, alpha = .5) +
+  geom_label_repel(data = locations, 
+                  aes(label = label),
+                  family = "pacifico",
+                  box.padding = 1.75) +
+  theme_map()
+```
+
+```{r}
+route_df_noS <- route(
+  from = "South Hall, Geneseo, NY",
+  to   = "Newton Hall, Geneseo, NY",
+  mode = "walking"
+  )
+
+route_df <- route(
+  from = "South Hall, Geneseo, NY",
+  to   = "Newton Hall, Geneseo, NY",
+  mode = "walking",
+  structure = "route"  # returns points along the path 
+)
+
+ggmap(Geneseo_Map) +
+  geom_path(data = route_df, 
+            aes(x = lon, y = lat), 
+            color = "#1C4982", size = 2, 
+            lineend = "round") +  # round, butt, square
+  geom_point(data = locations, 
+             aes(x = lon, y = lat), 
+             size = 2, color = "darkred") +
+  geom_text_repel(data = locations, 
+                  aes(x = lon, y = lat, label = label),
+                  family = "nunito", 
+                  box.padding = 1.75) +
+  theme_map()
+```
+
+
+
+```{r}
+route_df <- route(
+  from = "South Hall, Geneseo, NY",
+  to   = "Newton Hall, Geneseo, NY",
+  mode = "driving",
+  structure = "route"  # returns points along the path 
+)
+
+ggmap(Geneseo_Map) +
+  geom_path(data = route_df, 
+            aes(x = lon, y = lat), 
+            color = "#1C4982", size = 2, 
+            lineend = "round") +  # round, butt, square
+  geom_point(data = locations, 
+             aes(x = lon, y = lat), 
+             size = 2, color = "darkred") +
+  geom_text_repel(data = locations, 
+                  aes(x = lon, y = lat, label = label),
+                  family = "nunito", 
+                  box.padding = 1.75) +
+  theme_map()
+
+```
+
+
+
+```{r}
+# Available maptype options:
+# "roadmap", "satellite", "terrain", "hybrid"
+Geneseo_Map_Hybrid <- get_map("Geneseo, NY",
+                              source = "google",
+                              api_key = apiKey,
+                              zoom = 14, 
+                              maptype = "hybrid")
+
+ggmap(Geneseo_Map_Hybrid) +
+  geom_path(data = route_df, 
+            aes(x = lon, y = lat), 
+            color = "white", 
+            size = 2, 
+            lineend = "round",  # round, butt, square
+            arrow = arrow() # Arrow option
+            ) +  
+  geom_point(data = locations, 
+             aes(x = lon, y = lat), 
+             size = 2, color = "darkred") +
+  geom_label_repel(data = locations, 
+                  aes(x = lon, y = lat, label = label),
+                  family = "nunito", 
+                  box.padding = 1.75) +
+  theme_map()
+```
+
+```{r}
+# install.packages("ggimage")
+library(ggimage)
+
+# Let's suppose we have an icon URL
+icon_url <- "https://bcdanl.github.io/lec_figs/marker-icon-red.png"
+
+ggmap(Geneseo_Map) +
+  geom_image(data = locations,
+             aes(x = lon, y = lat, image = icon_url),
+             size = 0.05) +  # tweak size
+  geom_path(data = route_df, 
+            aes(x = lon, y = lat), 
+            color = "darkblue", 
+            size = .75, 
+            lineend = "round",  # round, butt, square
+            arrow = arrow() # Arrow option
+            ) +  
+  geom_label_repel(data = locations, 
+                  aes(label = label),
+                  box.padding = 1.75) +
+  theme_map()
+```
+
+
+
+# Classwork 9
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(ggmap)
+library(sf)
+```
+
+
+
+
+## Q2 - Google Maps
+
+```{r}
+route1 <- route(
+  from = "Central Park, NYC",
+  to   = "Empire State Building, NYC",
+  mode = "driving",
+  structure = "route"
+)
+
+route2 <- route(
+  from = "Empire State Building, NYC",
+  to   = "Times Square, NYC",
+  mode = "driving",
+  structure = "route"
+)
+
+route3 <- route(
+  from = "Times Square, NYC",
+  to   = "Central Park, NYC",
+  mode = "driving",
+  structure = "route"
+)
+
+
+
+```
+
+
+```{r}
+route1 <- route1 |> 
+  mutate(label = 1) 
+route2 <- route2 |> 
+  mutate(label = 2) 
+route3 <- route3 |> 
+  mutate(label = 3) 
+  
+routes <- rbind(route1, route2, route3)
+```
+
+
+```{r}
+locations <- geocode(
+  c("Central Park, NYC", 
+    "Empire State Building, NYC",
+    "Times Square, NYC")
+) |> 
+  mutate(
+    label = 
+      c("Central Park", 
+        "Empire State Building",
+        "Times Square")
+  )
+
+```
+
+```{r}
+NYC_Map <- get_map("Time Square, NYC", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 13)
+
+ggmap(NYC_Map) +
+  theme_map() 
+```
+
+
+```{r}
+
+
+icon_url <- "https://bcdanl.github.io/lec_figs/marker-icon-red.png"
+
+library(ggimage) # for geom_image()
+ggmap(NYC_Map) +
+  geom_image(data = locations,
+             aes(x = lon, y = lat),
+             image = icon_url) +
+  geom_path(data = routes,
+            aes(x = lon,
+                y = lat,
+                color = label),
+            size = rel(2),
+            show.legend = F) +
+  geom_label_repel(data = locations,
+                  aes(x = lon, y = lat,
+                      label = label),
+                  box.padding = 1.5,
+                  alpha = .75,
+                  family = 'pacifico') +
+  theme_map() 
+```
+
+
+
+
+
+
+## Q3 - NYC Taxi Trips to the MET
+
+
+### Q3a
+Create a data.frame whose taxi trip drop off is at the Metropolitan Museum of Art (MET), and taxi trip pick up is within Manhattan.
+
+
+```{r}
+range_lon_MET <- c(-73.963, -73.9615)
+range_lat_MET <- c(40.7785, 40.780)
+
+range_lon_Manhattan <- c(-74.03, -73.92)
+range_lat_Manhattan <- c(40.70, 40.88)
+```
+
+```{r}
+nyc_taxi <- read_csv("https://bcdanl.github.io/data/yellow_tripdata_2016-03-sample.csv") 
+```
+
+
+```{r}
+q3a <- nyc_taxi |> 
+  filter(pickup_longitude >= range_lon_Manhattan[1],
+         pickup_longitude <= range_lon_Manhattan[2],
+         pickup_latitude >= range_lat_Manhattan[1],
+         pickup_latitude <= range_lat_Manhattan[2]) |> 
+  filter(dropoff_longitude >= range_lon_MET[1],
+         dropoff_longitude <= range_lon_MET[2],
+         dropoff_latitude >= range_lat_MET[1],
+         dropoff_latitude <= range_lat_MET[2]
+         )
+```
+
+
+
+### Q3b
+
+```{r}
+q3b <- q3a |> 
+  filter(dense_rank(-total_amount) <= 2)
+
+q3b_1 <- q3b |> 
+  slice(1)
+
+q3b_2 <- q3b |> 
+  slice(2)
+
+pickup_latitude
+paste0(q3b_1$pickup_latitude, " ", q3b_1$pickup_longitude)
+
+route_taxi_1 <- route(
+  from = paste0(q3b_1$pickup_latitude, " ", q3b_1$pickup_longitude),
+  to   = paste0(q3b_1$dropoff_latitude, " ", q3b_1$dropoff_longitude),
+  mode = "driving",
+  structure = "route"  # returns points along the path 
+)
+
+
+route_taxi_2 <- route(
+  from = paste0(q3b_2$pickup_latitude, " ", q3b_2$pickup_longitude),
+  to   = paste0(q3b_2$dropoff_latitude, " ", q3b_2$dropoff_longitude),
+  mode = "driving",
+  structure = "route"  # returns points along the path 
+)
+
+
+
+
+```
+
+
+### Q3c
+
+- Plot a Google Map of Manhattan showing the top 2 most expensive tax trip path to the MET.
+- Visualize pick-up locations using a marker.
+Display the label of “Metropolitan Museum of Art” on the map.
+
+```{r}
+MET_location <- geocode("Metropolitan Museum of Art, NYC")
+
+
+
+MET_location <- MET_location |> 
+  mutate(label = "Metropolitan Museum of Art")
+
+
+MET_location2 <- c(mean(range_lon_MET), mean(range_lat_MET))
+# MET_location2 <- as.data.frame(MET_location2)
+# MET_location2 <- t(MET_location2)
+
+MET_location <- MET_location |> 
+  mutate(lon = MET_location2[1],
+         lat = MET_location2[2],
+         )
+
+
+colnames(MET_location2) <- c("lon", "lat")
+
+
+MET_Map <- get_map("Metropolitan Museum of Art, NYC", 
+                   source = "google", 
+                   api_key = apiKey, 
+                   zoom = 12)
+
+
+
+
+icon_url <- "https://bcdanl.github.io/lec_figs/marker-icon-red.png"
+
+
+
+route_taxi_1 <- route_taxi_1 |> 
+  mutate(id_route = 1, .before = 1)
+route_taxi_2 <- route_taxi_2 |> 
+  mutate(id_route = 2, .before = 1)
+
+route_taxi <- route_taxi_1 |> 
+  rbind(route_taxi_2)
+
+
+
+ggmap(MET_Map)  +
+  geom_image(data = MET_location,
+             aes(x = lon, y = lat, image = icon_url),
+             size = 0.05) +  # tweak size
+  geom_path(data = route_taxi, 
+            aes(x = lon, y = lat,
+                color = factor(id_route)), 
+            size = .75, 
+            lineend = "round",  # round, butt, square
+            ) +  
+  geom_label_repel(data = MET_location, 
+                  aes(label = label,
+                      x = lon, y = lat),
+                  box.padding = 1.75) +
+  theme_map()
+
+
+
+```
+
+
+
+
+
+# Interactive Viz
+
+## ggplotly
+
+```{r}
+# install.packages("plotly")
+library(plotly)
+dat <- data.frame(cond = rep(c("A", "B"), each = 10),
+                  xvar = 1:20 + rnorm(20, sd=3),
+                  yvar = 1:20 + rnorm(20, sd=3))
+
+p <- ggplot(dat, aes(x = xvar, y = yvar)) +
+  geom_point(shape=1)      # Use hollow circles
+fig <- ggplotly(p)
+fig
+```
+
+
+
+```{r}
+cces <- read_csv(url("https://bcdanl.github.io/data/cces.csv"))
+cces <- cces |> 
+  mutate(party = recode(dem, `1` = "Democrat", `0` = "Republican"))
+```
+
+
+
+```{r}
+p <- ggplot(cces, aes(x = seniority, y = les,
+                      color = party))+
+  geom_point()+
+  scale_color_manual(values=c("blue","red")) +
+  labs(x = "Seniority", y = "Leg. Effectiveness")
+
+p
+p1 <- ggplotly(p)
+p1
+
+
+# install.packages("htmlwidgets")
+library(htmlwidgets)
+saveWidget(p1, "/Users/bchoe/Downloads/fig.html")
+```
+
+## ggiraph
+
+```{r}
+# install.packages("ggiraph")
+library(ggiraph)
+data <- mtcars
+data$carname <- row.names(data)
+
+gg_point <- ggplot(data = data) +
+  geom_point_interactive(aes(x = wt, y = qsec, 
+                             color = disp,
+                             tooltip = carname, 
+                             data_id = carname)) + 
+  theme_minimal()
+
+gg_point
+
+girafe(ggobj = gg_point)
+
+
+p2 <- girafe(ggobj = gg_point)
+p2
+
+saveWidget(p2, "/Users/bchoe/Downloads/girafe_fig.html")
+```
+
+
