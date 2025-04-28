@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+
+# Visualizing New York City with **ggmap** and OpenStreetMap data  
+This walkthrough shows how to use **ggmap** (leveraging free OpenStreetMap tiles) to  
+
+1. display a street map of Manhattan,  
+2. mark **Central Park** and **The Metropolitan Museum of Art**, and  
+3. draw a **driving route** from **Wall Street** to **Times Square**.
+
+> **Packages used:** `ggmap`, `ggplot2`, `dplyr`, `sf`, and `osrm`  
+> – `ggmap` fetches the base map  
+> – `osrm` (Open Source Routing Machine) returns an OSM‑based route without the need for a Google API key  
+> – `sf` handles the route geometry
+
+---
+
+## 1. Setup
+
+```{r}
+# install.packages(c("ggmap", "osrm", "sf", "dplyr"))
+library(ggmap)
+library(dplyr)
+library(sf)
+library(osrm)
+```
+
+
+
+```{r}
+# Rough center of Manhattan
+nyc_center <- c(lon = -74.00, lat = 40.72)
+
+# A zoom level of 12–13 shows all requested locations clearly
+nyc_map <- get_map(location = nyc_center,
+                   zoom      = 12,
+                   source    = "osm")  # fetches OpenStreetMap tiles
+```
+

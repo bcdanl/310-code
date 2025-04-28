@@ -1,0 +1,442 @@
+---
+title: "Untitled"
+editor: visual
+---
+
+
+
+```{r}
+#| echo: true
+#| eval: false
+
+
+#–– package installation ––-----------------------------------------------------
+# install.packages(c("osmdata", "osrm"))      # ← run once, then comment-out
+
+library(sf)          # simple-features objects & spatial ops
+library(ggmap)       # basemap tiles + ggplot2 integration
+library(tidyverse)   
+library(ggthemes)    # extra ggplot2 themes (incl. theme_map)
+library(osmdata)     # bounding boxes
+library(tidygeocoder) # tidy-style geocoding (Nominatim by default)
+library(ggrepel)     
+library(ggimage)     # drop-in PNG icons
+library(showtext)    # Google-font rendering inside R graphics
+
+#–– fonts ––--------------------------------------------------------------------
+font_add_google("Alegreya Sans", "aleg")       
+font_add_google("Annie Use Your Telescope", "annie")
+font_add_google("Pacifico", "pacifico")        
+showtext_auto()                                # enable showtext globally
+
+#–– Stadia Maps key ––---------------------------------------------------------
+stadia_api <- "d721d87d-a578-476c-84c9-8002969388a6"     # replace w/ your key
+register_stadiamaps(stadia_api, write = TRUE)            # store in env file
+
+#–– Boundary box  --------------------------------------------------------------
+bbox <- getbb("Manhattan, NY")   # returns 4-value named vector (xmin,…)
+
+#–– Fetch basemap tiles ––------------------------------------------------------
+man_map <- get_stadiamap(
+  bbox,
+  zoom    = 14,                 # ↑ zoom = ↑ detail (and ↑ tiles & time)
+  maptype = "stamen_terrain"    # other options: stamen_toner, stamen_watercolor, …
+)
+
+#–– Geocode landmarks ––--------------------------------------------------------
+locations <- 
+  tibble(address = c("Times Square", "Central Park")) |>
+  geocode(address)               # adds long / lat columns (CRS 4326)
+
+# osrm & ggmap both attach a function named “mutate()”; avoid a clash by
+# not attaching osrm – instead, call it with osrm:: prefix.
+# (If you *must* attach osrm, load it *before* ggmap.)
+
+# Pull lon/lat into a plain matrix expected by osrmRoute()
+coords_mat <- as.matrix(locations[, c("long","lat")])   # 2×2 matrix
+
+#–– Walking route ––------------------------------------------------------------
+route_foot <- osrm::osrmRoute(
+  src      = coords_mat[1, ],   # Times Square  (lon, lat)
+  dst      = coords_mat[2, ],   # Central Park (lon, lat)
+  overview = "full",            # full-resolution polyline
+  osrm.profile = "foot"         # routing profile: foot / bike / car
+) |>
+  mutate(mode = "Foot")         # tag for legend
+
+#–– Driving route ––------------------------------------------------------------
+route_car <- osrm::osrmRoute(
+  src      = coords_mat[1, ],
+  dst      = coords_mat[2, ],
+  overview = "full",
+  osrm.profile = "car"
+) |>
+  mutate(mode = "Car")
+
+# combine & prettify
+routes <- rbind(route_foot, route_car) |>
+  mutate(duration = round(duration, 2),                  # minutes
+         mode = str_c(mode, "\n", duration, " min."))    # legend label
+
+#–– Build plotting extent ––----------------------------------------------------
+bb_routes <- st_bbox(routes)        # xmin, ymin, xmax, ymax (degrees)
+pad_x <- (bb_routes$xmax - bb_routes$xmin) * 0.25   # 25 % padding
+pad_y <- (bb_routes$ymax - bb_routes$ymin) * 0.25
+
+xlim <- c(bb_routes$xmin - pad_x, bb_routes$xmax + pad_x)
+ylim <- c(bb_routes$ymin - pad_y, bb_routes$ymax + pad_y)
+
+# optional bbox for get_stadiamap()
+bb_from_limits <- matrix(
+  c(xlim["xmin"], xlim["xmax"],   # x-row (min, max)
+    ylim["ymin"], ylim["ymax"]),  # y-row (min, max)
+  nrow = 2, byrow = TRUE,
+  dimnames = list(c("x", "y"), c("min", "max"))
+)
+
+
+
+#–– Plot ––---------------------------------------------------------------------
+icon_url <- "https://bcdanl.github.io/lec_figs/marker-icon-red.png"  # pin PNG
+
+ggmap(man_map) +
+  geom_sf(
+    data = routes,
+    aes(color = mode),
+    inherit.aes = FALSE,   # don’t map long/lat twice
+    linewidth = rel(2),
+    alpha = 0.75
+  ) +
+  geom_image(
+    data = locations,
+    aes(x = long, y = lat, image = icon_url)
+  ) +
+  geom_label_repel(
+    data = locations,
+    aes(long, lat, label = address),
+    box.padding = 1.75,
+    family = "pacifico"
+  ) +
+  coord_sf(                      # keep CRS 4326; clamp to padded bbox
+    crs   = st_crs(4326),
+    xlim  = xlim,
+    ylim  = ylim,
+    expand = FALSE
+  ) +
+  scale_color_colorblind() +
+  guides(
+    color = guide_legend(
+      title.position = "top",
+      keywidth = rel(3)
+    )
+  ) +
+  labs(
+    color    = "",
+    title    = "Car vs. Foot",
+    subtitle = "How would you like to go\nfrom Time Square to Central Park?",
+    caption  = "Source: OpenStreetMap (OSM) and Open Source Routing Machine (OSRM)"
+  ) +
+  theme_map() +
+  theme(
+    legend.position  = "top",
+    plot.title       = element_text(face = "bold",         size = rel(3.25)),
+    plot.subtitle    = element_text(face = "bold.italic",  size = rel(2)),
+    legend.text      = element_text(size = rel(2))
+  )
+
+```
+
+
+
+```{r}
+# install.packages("ggiraph")
+library(ggiraph)
+data <- mtcars
+data$carname <- row.names(data)
+
+gg_point <- ggplot(data = data) +
+  geom_point_interactive(aes(x = wt, y = qsec, 
+                             color = disp,
+                             tooltip = carname, 
+                             data_id = carname)) + 
+  theme_minimal()
+
+gg_point
+
+p2 <- girafe(ggobj = gg_point)
+p2
+library(htmlwidgets)
+saveWidget(p2, "/Users/bchoe/Documents/websites/310-code/girafe_fig.html")
+```
+
+
+
+# Animation
+
+```{r}
+mtcars <- datasets::mtcars
+
+p <- ggplot(data = mtcars,
+       mapping = aes(x = factor(cyl), y = mpg)) +
+  geom_boxplot()
+
+p
+```
+
+
+
+```{r}
+p + facet_wrap(~gear)
+```
+
+
+```{r}
+# install.packages("gganimate")
+library(gganimate)
+
+my_anim <- p + 
+  transition_states(gear)
+
+my_anim
+```
+
+
+```{r}
+my_anim2 <- p + 
+  transition_states(gear,
+    transition_length = 3,  # relative length
+    state_length = 2)  # relative length
+
+my_anim2
+```
+
+```{r}
+cces <- read_csv(url("https://bcdanl.github.io/data/cces.csv"))
+cces <- cces |> 
+  mutate(party = recode(dem,`1`="Democrat",`0`="Republican")) #  to create a new variable corresponding to other factor variable.
+
+cong_dat <- cces |> 
+  group_by(year, party) |>
+  summarise( seats =n())
+```
+
+
+```{r}
+p <- ggplot(cong_dat, 
+            aes(x = year, y= seats, 
+                fill = party)) +
+  geom_col() +
+  geom_hline(yintercept = 217) +  # threshold for having a majority of seats in the house.
+  scale_fill_manual(values=c("darkblue","darkred"))
+
+p
+```
+
+```{r}
+anim2 <- p + transition_time(year)
+
+anim2
+```
+
+
+
+```{r}
+p <- ggplot() + 
+  geom_jitter(data = filter(cces, 
+                            congress==115 & party=="Democrat"),
+              aes(x = seniority, y = all_pass,
+                  color = party) ) +
+  geom_jitter(data = filter(cces, 
+                            congress==115 & party=="Republican"),
+              aes(x = seniority, y = all_pass,
+                  color = party) ) +
+  geom_smooth(data = filter(cces, 
+                            congress==115 & party=="Democrat"),
+              aes(x = seniority, y = all_pass,
+                  color = party) ) +
+  geom_smooth(data = filter(cces, 
+                            congress==115 & party=="Republican"),
+              aes(x = seniority, y = all_pass,
+                  color = party) ) +
+  scale_color_manual(values=c("blue","red"))
+
+p
+```
+
+
+```{r}
+p + transition_layers()
+```
+
+```{r}
+anim <- ggplot(mtcars, aes(factor(cyl), mpg)) +
+  geom_boxplot() +
+  transition_states(factor(cyl))
+
+
+anim
+```
+
+
+
+```{r}
+# Fade-in, fade-out
+anim1 <- anim +
+  enter_fade() +
+  exit_fade()
+
+anim1
+
+```
+
+
+```{r}
+p <- ggplot(cong_dat,
+                aes(x = year, y = seats, fill = party)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 217) +
+  scale_fill_manual(values = c("blue","red"))
+
+p
+```
+
+```{r}
+p + transition_time(year)
+```
+
+
+
+```{r}
+anim3 <- p + transition_time(year) +
+  shadow_wake(wake_length = 1,
+              alpha = TRUE,
+              wrap = TRUE)
+
+anim3
+```
+
+
+
+```{r}
+p + transition_time(year) +
+  enter_fade() +
+  exit_fade()
+```
+
+
+```{r}
+library(gapminder)
+p <- gapminder |>
+  ggplot() + 
+    geom_point(aes(x = gdpPercap, y = lifeExp, 
+                   color = continent, size = pop), 
+               alpha = 0.75) + 
+  theme_minimal() + theme(legend.position = "top") + 
+  guides(size = "none") + 
+  labs(x = "GDP per Capita", y = "Life Expetancy", color = "") 
+
+p
+```
+
+
+```{r}
+p + transition_time(year)
+```
+
+
+```{r}
+p +
+  transition_time(year) +
+  labs(title = "Year: {frame_time}")
+```
+
+
+```{r}
+p +
+  geom_text(aes(x = min(gdpPercap), 
+                y = min(lifeExp), 
+                label = as.factor(year)) , 
+            hjust=-2, vjust = -0.2, alpha = 0.2,  
+            color = "gray", size = 20) +
+  transition_states(as.factor(year), state_length = 0)
+```
+
+
+```{r}
+gapminder |>
+  filter(country == "United States") |>
+  ggplot(aes(x = year, y = pop)) + 
+  geom_point() + geom_line() +
+  theme_minimal() +
+  transition_reveal(year)
+```
+```{r}
+gapminder |>
+  filter(country == "United States") |>
+  ggplot(aes(x = year, y = pop)) + 
+  geom_point() + geom_line() + 
+  geom_text(aes(x = min(year), y = min(pop), 
+                label = as.factor(year)) , 
+            hjust=-2, vjust = -0.2, alpha = 0.5,  
+            color = "gray", size = 20) +
+  theme_minimal() +
+  transition_reveal(year) + 
+  view_follow()
+```
+
+```{r}
+gapminder_sum <- gapminder |>
+  group_by(year) |>
+  arrange(year, desc(gdpPercap)) |>
+  mutate(ranking = row_number()) |>
+  filter(ranking <=15)
+```
+
+
+
+```{r}
+p <- gapminder_sum |>
+  ggplot() +
+  geom_col(aes(x = ranking, y = gdpPercap, fill = country)) +
+  geom_text(aes(x = ranking, y = gdpPercap, label = round(gdpPercap, 0)), 
+            hjust=-0.1) +
+  geom_text(aes(x = ranking, y = 0 , 
+                label = country), hjust=1.1) + 
+  geom_text(aes(x = 15, 
+                y = max(gdpPercap), 
+                label = as.factor(year)), 
+            vjust = 0.2, alpha = 0.5,  color = "gray", size = 20) +
+  coord_flip(clip = "off", expand = FALSE) + 
+  scale_x_reverse() +
+  theme_minimal() + 
+  theme(
+    panel.grid = element_blank(), 
+    legend.position = "none",
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    plot.margin = margin(1, 4, 1, 3, "cm")
+  )
+```
+
+
+
+```{r}
+anim <- p +
+  transition_states(year, state_length = 0, transition_length = 2) +
+  enter_fade() +
+  exit_fade() + 
+  ease_aes('quadratic-in-out') 
+p_anim <- animate(anim, 
+                  width = 700, height = 432, 
+                  fps = 25, duration = 15, 
+                  rewind = FALSE)
+p_anim
+```
+
+
+
+
+
+
+
