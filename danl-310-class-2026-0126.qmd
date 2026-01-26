@@ -1,0 +1,284 @@
+---
+title: Quarto with R 
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: YOUR NAME 
+    affiliation: SUNY Geneseo
+    
+  # - name: YOUR COWORKER 1
+  #   affiliation: SUNY Geneseo
+    
+date: "2026-01-25"
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x = 
+                  element_text(angle = 0,
+                               size = rel(1.33),
+                               margin = margin(10,0,0,0)),
+                axis.title.y = 
+                  element_text(angle = 90,
+                               size = rel(1.33),
+                               margin = margin(0,10,0,0))
+                )
+          )
+```
+
+
+
+# Coding with R
+
+Shortcut to run code in a chunk
+
+- Mac: command + shift + return
+- Windows: Ctrl + Shift + Enter
+
+```{r}
+library(skimr)
+
+```
+
+
+
+
+# Data Viz: First Step
+
+Shortcut to run a current line in a code chunk
+
+- Mac: command + return
+- Windows: Ctrl + Enter
+
+```{r}
+library(tidyverse)
+mpg <- mpg
+?mpg
+```
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ, 
+              y = hwy) ) + 
+  geom_point()
+```
+
+```{r}
+ggplot(data = mpg,
+       mapping = 
+          aes(x = displ, 
+              y = hwy) ) +
+ geom_point()
+ + geom_smooth()
+```
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ, 
+              y = hwy) ) + 
+  geom_point() +
+  geom_smooth()
+```
+
+
+```{r}
+# alpha = 0.33 should be located
+# within the geom function,
+# NOT within the aesthetic function
+
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ, 
+              y = hwy) ) + 
+  geom_point( alpha = 0.33 ) 
+```
+
+
+```{r}
+# alpha = 0.33 should be located
+# within the geom function,
+# NOT within the aesthetic function
+
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ, 
+              y = hwy) ) + 
+  geom_point( alpha = 0.33 ) +
+  geom_smooth()
+```
+
+```{r}
+
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ, 
+              y = hwy) ) + 
+  geom_point( alpha = 0 ) 
+```
+ggplot has only 6 distinct shapes
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              shape = class) ) + 
+  geom_point()
+```
+```{r}
+
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point()
+```
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy) ) + 
+  geom_point(color = "purple",
+             size = 10)
+```
+ 
+
+```{r}
+ggplot(data = mpg,
+       mapping =
+         aes(x = displ,
+             y = hwy) ) +
+  geom_point(size = 3)  # in *mm*
+```
+
+
+```{r}
+ggplot(data = mpg,
+       mapping =
+         aes(x = displ,
+             y = hwy) ) +
+  geom_point(shape = 3)  
+```
+```{r}
+ggplot(data = mpg,
+       mapping =
+         aes(x = displ,
+             y = hwy) ) +
+  geom_point(shape = 5)  
+```
+
+```{r}
+ggplot(data = mpg,
+       mapping =
+         aes(x = displ,
+             y = hwy) ) +
+  geom_point(shape = 23)  
+```
+
+
+```{r}
+ggplot(data = mpg,
+       mapping =
+         aes(x = displ,
+             y = hwy) ) +
+  geom_point(shape = 23,
+             fill = "blue",
+             color = "darkorange")  
+```
+
+```{r}
+ggplot(data = mpg,
+       mapping = 
+         aes(x = displ, 
+             y = hwy) ) + 
+  geom_point(alpha = .3) 
+```
+
+```{r}
+ggplot(data = mpg,
+       mapping = 
+         aes(x = displ, 
+             y = hwy,
+             alpha = class) ) + 
+  geom_point() 
+```
+
+
+
+```{r}
+mpg_subcompact <- mpg |> 
+      filter(class == "subcompact")
+```
+
+
+```{r}
+ggplot(data = mpg, 
+       mapping = 
+         aes(x = displ, y = hwy)) +
+  geom_point(
+    mapping = aes(color = class), 
+    alpha = 0.5) +
+  geom_smooth(
+    se = FALSE   # standard error
+  )
+```
+
+```{r}
+ggplot(data = mpg, 
+       mapping = 
+         aes(x = displ, y = hwy)) +
+  geom_point(
+    mapping = aes(color = class), 
+    alpha = 0.5) +
+  geom_smooth(
+    # local data.frame
+    data = mpg |> 
+      filter(class == "subcompact"),
+    se = FALSE   # standard error
+  )
+```
+
+```{r}
+ggplot(data = mpg, 
+       mapping = 
+         aes(x = displ, y = hwy,
+             color = class)) +
+  geom_point(
+    alpha = 0.3) +
+  geom_smooth(
+    se = FALSE   # standard error
+  )
+```
+
