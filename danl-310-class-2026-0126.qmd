@@ -92,6 +92,7 @@ ggplot( data = mpg,
 ```
 
 ```{r}
+#| eval: false
 ggplot(data = mpg,
        mapping = 
           aes(x = displ, 
