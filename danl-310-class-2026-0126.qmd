@@ -1,14 +1,14 @@
 ---
-title: Quarto with R 
+title: Class Script
 subtitle: "DANL 310: Data Visualization and Presentation"
 author:
-  - name: YOUR NAME 
+  - name: Byeong-Hak Choe
     affiliation: SUNY Geneseo
     
   # - name: YOUR COWORKER 1
   #   affiliation: SUNY Geneseo
     
-date: "2026-01-25"
+date: 2026-01-25
 
 execute: 
   echo: true

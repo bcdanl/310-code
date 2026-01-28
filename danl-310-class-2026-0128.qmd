@@ -1,0 +1,167 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+  # - name: YOUR COWORKER 1
+  #   affiliation: SUNY Geneseo
+    
+date: 2026-01-25
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x = 
+                  element_text(angle = 0,
+                               size = rel(1.33),
+                               margin = margin(10,0,0,0)),
+                axis.title.y = 
+                  element_text(angle = 90,
+                               size = rel(1.33),
+                               margin = margin(0,10,0,0))
+                )
+          )
+```
+
+
+
+# Coding with R
+
+Shortcut to run code in a chunk
+
+- Mac: command + shift + return
+- Windows: Ctrl + Shift + Enter
+
+```{r}
+library(tidyverse)
+library(gapminder)
+```
+
+
+```{r}
+#| fig-height: 15
+ggplot(data = gapminder,
+       mapping = 
+         aes(x = log10(gdpPercap), 
+             y =lifeExp)) + 
+  geom_point(alpha = .4) + 
+  facet_wrap( ~ continent,
+              ncol = 1)
+```
+
+
+```{r}
+ggplot(data = gapminder,
+       mapping = 
+         aes(x = log10(gdpPercap), 
+             y =lifeExp)) + 
+  geom_point(alpha = .4) + 
+  facet_wrap( ~ continent,
+              ncol = 3)
+```
+
+
+```{r}
+
+# without scales
+ggplot(data = gapminder,
+       mapping = 
+         aes(x = log10(gdpPercap), 
+             y =lifeExp)) + 
+  geom_point(alpha = .4) + 
+  facet_wrap( ~ continent)
+```
+
+
+
+```{r}
+ggplot(data = gapminder,
+       mapping = 
+         aes(x = log10(gdpPercap), 
+             y =lifeExp)) + 
+  geom_point(alpha = .4) + 
+  facet_wrap( ~ continent,
+              scales = "free_x")
+
+```
+
+
+
+# Classwork 2
+
+```{r}
+df <- read_csv("http://bcdanl.github.io/data/icecream-shark-df.csv")
+df
+```
+
+```{r}
+ggplot(data = __BLANK_1__,
+       mapping = aes(x = __BLANK_2__,
+                     y = __BLANK_3__)) +
+  geom___BLANK_4__() +
+  geom___BLANK_5__()
+```
+
+
+
+
+
+```{r}
+nbc_show <- read_csv("https://bcdanl.github.io/data/nbc_show.csv")
+
+ggplot(data = nbc_show,
+       mapping = aes(x = GRP,
+                     y = PE,
+                     color = Genre)) +
+  geom_point(show.legend = FALSE) +  # show.legend = FALSE turns of legend
+  geom_smooth(method = "lm",
+              show.legend = FALSE,   # show.legend = FALSE turns of legend
+              se = FALSE) +  # se = FALSE turns off the ribbon
+  facet_wrap( ~ Genre)
+```
+
+
+```{r}
+
+ggplot(data = nbc_show,
+       mapping = aes(x = GRP,
+                     y = PE,
+                     color = Genre)) +
+  geom_point(show.legend = FALSE) +  # show.legend = FALSE turns of legend
+  geom_smooth(method = "lm",
+              show.legend = FALSE,   # show.legend = FALSE turns of legend
+              se = FALSE) +  # se = FALSE turns off the ribbon
+  facet_wrap( ~ Genre)
+```
+
+
