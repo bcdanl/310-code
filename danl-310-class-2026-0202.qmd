@@ -5,9 +5,6 @@ author:
   - name: Byeong-Hak Choe
     affiliation: SUNY Geneseo
     
-  # - name: YOUR COWORKER 1
-  #   affiliation: SUNY Geneseo
-    
 date: 2026-02-02
 
 execute: 

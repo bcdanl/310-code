@@ -1,0 +1,334 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-02-04
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x =
+                  element_text(angle = 0,
+                               size = rel(1.33),
+                               margin = margin(10,0,0,0)),
+                axis.title.y =
+                  element_text(angle = 90,
+                               size = rel(1.33),
+                               margin = margin(0,10,0,0))
+                )
+          )
+```
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind()
+```
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_tableau()
+```
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) 
+```
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind() +
+  theme_economist()
+```
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind() +
+  theme_wsj()
+```
+
+
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind() +
+  ggthemes::theme_fivethirtyeight()
+
+```
+
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind() +
+  ggthemes::theme_tufte()
+
+```
+
+
+
+```{r}
+ggplot( data = mpg,
+        mapping = 
+          aes(x = displ,
+              y = hwy, 
+              color = class) ) + 
+  geom_point(size = 3) +
+  scale_color_colorblind() +
+  ggplot2::theme_minimal()
+
+```
+
+```{r}
+mpg <- mpg
+```
+
+
+```{r}
+# labs() can label
+#   x-axis, y-axis, and more
+
+ggplot(data = mpg,
+       mapping = 
+        aes(x = hwy,
+            y = 
+             fct_reorder(class, -hwy),
+            fill = class)) + 
+  geom_boxplot(
+    show.legend = FALSE) +
+  scale_fill_tableau() +
+  labs(x = "Highway MPG",
+       y = "Class") 
+
+```
+
+# Bar charts
+
+```{r}
+diamonds <- ggplot2::diamonds
+?diamonds
+```
+
+
+```{r}
+ggplot(data = diamonds,
+       mapping = aes(x = cut)) + 
+  geom_bar()
+```
+
+
+```{r}
+ggplot(data = diamonds,
+       mapping = aes(y = cut)) + 
+  geom_bar()
+```
+```{r}
+ggplot(data = diamonds,
+       mapping = 
+         aes(x = cut, 
+             color = cut)) + 
+  geom_bar(
+    show.legend = FALSE
+    ) 
+```
+
+```{r}
+ggplot(data = diamonds,
+       mapping = 
+         aes(x = cut, 
+             fill = cut)) + 
+  geom_bar(
+    show.legend = FALSE
+    ) 
+```
+
+
+## `count()`
+
+```{r}
+diamonds |> 
+  count(cut)
+```
+```{r}
+count(diamonds, 
+        cut)
+```
+
+
+```{r}
+df_count <- diamonds |> 
+  count(cut, clarity)
+```
+
+```{r}
+ggplot(data = diamonds,
+       mapping = 
+         aes(x = cut, 
+             fill = clarity)) + 
+  geom_bar(position = "fill") +
+  labs(y = "Proportion")
+```
+
+
+
+```{r}
+#| fig-height: 8
+
+library(nycflights13)
+ggplot(data = flights,
+       mapping = 
+         aes(y = carrier, 
+             fill = origin)) + 
+  geom_bar(position = "dodge")
+```
+
+
+```{r}
+#| fig-height: 8
+
+library(nycflights13)
+ggplot(data = flights,
+       mapping = 
+         aes(y = carrier, 
+             fill = origin)) + 
+  geom_bar(position = position_dodge2(preserve = "single"))
+```
+
+
+
+
+```{r}
+#| fig-height: 8
+
+library(nycflights13)
+ggplot(data = flights,
+       mapping = 
+         aes(y = carrier, 
+             fill = origin)) + 
+  geom_bar(position = "dodge")
+```
+
+```{r}
+#| fig-height: 8
+
+library(nycflights13)
+ggplot(data = flights,
+       mapping = 
+         aes(y = carrier, 
+             fill = origin)) + 
+  geom_bar(position = position_dodge2())
+```
+
+```{r}
+ggplot(data = diamonds,
+       mapping = 
+         aes(x = cut, 
+             y = after_stat(prop),
+             group = 1)) + 
+  geom_bar()
+```
+
+
+```{r}
+ggplot(data = diamonds,
+       mapping = 
+         aes(x = cut, 
+             y = after_stat(prop))) + 
+  geom_bar()
+```
+
+
+```{r}
+df <- mpg |> 
+  count(class)
+
+ggplot(data = df,
+       mapping = 
+         aes(x = n, 
+             y = class)) + 
+  geom_col()
+```
+
+
+```{r}
+df <- mpg |> 
+  count(class) |> 
+  mutate(prop = n / sum(n))
+
+ggplot(data = df,
+       mapping = 
+         aes(x = prop, 
+             y = class)) + 
+  geom_col()
+```
+
+
+
