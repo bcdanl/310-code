@@ -1,0 +1,156 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+  # - name: YOUR COWORKER 1
+  #   affiliation: SUNY Geneseo
+    
+date: 2026-02-02
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x = 
+                  element_text(angle = 0,
+                               size = rel(1.33),
+                               margin = margin(10,0,0,0)),
+                axis.title.y = 
+                  element_text(angle = 90,
+                               size = rel(1.33),
+                               margin = margin(0,10,0,0))
+                )
+          )
+```
+
+
+```{r}
+library(tidyverse)
+# install.packages("gapminder")
+library(gapminder)
+??gapminder
+df_gapminder <- gapminder
+
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = gdpPercap)) +
+  geom_point(size = .5) +
+  geom_line()
+```
+
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = gdpPercap,
+                     group = country)) +
+  geom_point(size = .5) +
+  geom_line()
+
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = gdpPercap,
+                     color = country)) +
+  geom_point(size = .5) +
+  geom_line()
+    
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = gdpPercap,
+                     color = country)) +
+  geom_point(size = .5,
+             color = "black") +
+  geom_line(show.legend = F)
+
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = gdpPercap,
+                     group = country)) +
+  geom_point(size = .5,
+             color = "black") +
+  geom_line(show.legend = FALSE) +
+  facet_wrap( ~ continent)
+
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x = year,
+                     y = log(gdpPercap),
+                     group = country)) +
+  geom_point(size = .5,
+             color = "black") +
+  geom_line(show.legend = FALSE) +
+  facet_wrap( ~ continent,
+              nrow = 1)
+
+```
+
+```{r}
+ggplot(data = df_gapminder,
+       mapping = aes(x =year,
+                     y = log(gdpPercap))) +
+  geom_line(show.legend = FALSE,
+                   color = 'grey',
+                   mapping = aes(group = country)) + # Advanced ggplot: we can add a specific aes() to a specific geom.
+  geom_smooth() +
+  facet_wrap(~ continent, 
+             nrow = 1)
+
+```
+
+```{r}
+titanic <- 
+  read_csv(
+    "https://bcdanl.github.io/data/titanic_cleaned.csv")
+
+ggplot(data = titanic,
+       mapping = 
+         aes(x = age)) + 
+  geom_histogram(bins = 60,
+                 binwidth = 1)
+```
+
+
