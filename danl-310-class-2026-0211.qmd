@@ -1,0 +1,498 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-02-11
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x =
+                  element_text(angle = 0,
+                               size = rel(1.33),
+                               margin = margin(10,0,0,0)),
+                axis.title.y =
+                  element_text(angle = 90,
+                               size = rel(1.33),
+                               margin = margin(0,10,0,0))
+                )
+          )
+```
+
+
+
+# filter
+
+```{r}
+df <- data.frame(
+  num = c(8, 9, 10, 11),
+  chr = c("A", "C", "B", "A")
+  )
+
+df
+```
+
+```{r}
+df |> 
+  filter(num > 8 & 
+         num < 11)
+                
+```
+
+
+```{r}
+
+df |> 
+  filter(num > 8,
+         num < 11)
+```
+
+```{r}
+df |> 
+  filter(num < 10 & 
+         chr == "A")
+
+```
+```{r}
+ 
+df |> 
+  filter(num < 10, 
+         chr == "A")
+```
+```{r}
+df |> 
+  filter(num < 10 | 
+         chr == "A")
+```
+
+## Missing Value
+```{r}
+V1 <- c(1, NA, 3)
+is.na(V1)  # is V1 NA?
+!is.na(V1)  # is V1 not NA?
+```
+
+
+```{r}
+df <- data.frame(
+  v1 = c(1, NA, 3),
+  v2 = c(1, 2, 3)
+  )
+df
+```
+
+
+```{r}
+
+df |> 
+  filter( is.na(v1) )
+
+```
+
+```{r}
+df |> 
+  filter( !is.na(v1) )
+```
+
+
+```{r}
+library(nycflights13)
+
+flights <- flights
+# Sort observations 
+  # by dep_delay (ascending)
+flights |> 
+  arrange(dep_delay)
+
+
+```
+
+
+```{r}
+# Sort by dep_delay, 
+  # then by sched_dep_time
+flights |> 
+  arrange(dep_delay, sched_dep_time)
+```
+```{r}
+# Sort by departure delay 
+  # in descending order
+flights |> 
+  arrange(desc(dep_delay))
+
+
+flights |> 
+  arrange(-dep_delay)
+```
+
+
+```{r}
+
+flights |> 
+  arrange(-carrier)
+```
+
+# `distinct()`
+
+
+```{r}
+df <- data.frame(
+  country = c("USA", "Korea", "USA"),
+  city = c("D.C.", "Seoul", "D.C."),
+  subregion = c("Georgetown", 
+                "Gangnam", 
+                "Georgetown") 
+  )
+
+df
+```
+
+
+```{r}
+df |> 
+  distinct()
+```
+
+
+```{r}
+# Remove duplicate observations 
+  # from the flights data.frame
+v1 <- flights |> 
+  distinct() |> 
+  nrow()
+
+v2 <- flights |> 
+  nrow()
+
+v1 == v2
+```
+
+
+```{r}
+flights |> 
+  distinct(origin, dest)
+```
+
+
+
+```{r}
+flights |> 
+  count(origin, dest) |> 
+  arrange(-n)
+```
+
+# select()
+
+```{r}
+flights |> 
+  select(year, month, day)
+```
+
+
+
+```{r}
+flights <- flights |> 
+  select(-year)
+```
+
+
+
+```{r}
+flights |> 
+  select(starts_with("dep"))
+```
+
+# rename
+
+```{r}
+flights <- flights |> 
+  rename( tail_num = tailnum )
+```
+
+# relocate()
+
+```{r}
+flights |> 
+  relocate(time_hour, air_time)
+```
+
+```{r}
+tmp <- nycflights13::flights |> 
+  relocate(year:dep_time, .after = time_hour)
+
+```
+
+
+```{r}
+tmp <- flights |> 
+  relocate(starts_with("arr"), .before = dep_time)
+```
+
+
+```{r}
+flights <- nycflights13::flights
+
+flights <- flights |> 
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60
+  )
+```
+
+```{r}
+nycflights13::flights |> 
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    .before = 1  ## try different position numbers.
+  )
+```
+
+```{r}
+nycflights13::flights |> 
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    .after = day  
+  )
+```
+
+
+
+```{r}
+df <- data.frame(x = 1:10,
+                 y = c(2,4,6,8,10,
+                       1,3,5,7,9))
+
+df
+```
+
+
+```{r}
+df <- df |> 
+  mutate(
+    x_lag = lag(x),  # previous value
+    x_lead = lead(x),  # next value
+    y_cumsum = cumsum(y),    # running sum
+    y_cummean = cummean(y),   # running average
+    y_cummin = cummin(y),    # running minimum
+    y_cummax = cummax(y)    # running maximum
+  )
+df
+```
+
+
+```{r}
+rank_me <- data.frame(x = c(10, 5, 1, 5, 5, NA))
+```
+
+```{r}
+
+rank_me <- rank_me |>
+  mutate(
+    id = row_number(),             # row id (1, 2, 3, ...)
+    x_row_number = row_number(x),  # tie-breaking rank (arbitrary but stable)
+    x_min_rank   = min_rank(x),    # ranks with gaps when ties occur
+    x_dense_rank = dense_rank(x),  # ranks without gaps when ties occur
+    x_percent    = percent_rank(x),# 0 to 1 (excluding 1 unless max)
+    x_cume       = cume_dist(x)    # 0 to 1 (including 1 for max)
+  )
+
+rank_me
+```
+
+```{r}
+rank_me <- rank_me |>
+  mutate(
+    id = row_number(),             # row id (1, 2, 3, ...)
+    x_row_number = row_number(-x),  # tie-breaking rank (arbitrary but stable)
+    x_min_rank   = min_rank(-x),    # ranks with gaps when ties occur
+    x_dense_rank = dense_rank(-x),  # ranks without gaps when ties occur
+    x_percent    = percent_rank(-x),# 0 to 1 (excluding 1 unless max)
+    x_cume       = cume_dist(-x)    # 0 to 1 (including 1 for max)
+  ) |> 
+  arrange(x_dense_rank)
+rank_me
+```
+
+```{r}
+flight_season <- flights |>
+  mutate(
+    summer_month = 
+      if_else(month %in% c(6, 7, 8), 
+              TRUE, FALSE)
+  )
+```
+
+
+```{r}
+flight_season <- flights |>
+  mutate(
+    summer_month2 = 
+      ifelse(month %in% c(6, 7, 8), 
+             TRUE, 0)  # coerces to 
+  )                    #    numeric
+```
+
+
+
+```{r}
+flight_season <- flights |>
+  mutate(
+    summer_month = 
+      if_else(month %in% c(6, 7, 8), 
+              "T", FALSE)
+  )
+```
+
+
+
+```{r}
+flight_season <- flights |>
+  mutate(
+    summer_month = 
+      ifelse(month %in% c(6, 7, 8), 
+              "T", FALSE)
+  )
+```
+
+
+
+```{r}
+scores <- tibble(score = c(95, 82, 74, 61, NA))
+scores |>
+  mutate(
+    grade = case_when(
+      is.na(score)      ~ "missing",
+      score >= 90       ~ "A",
+      score >= 80       ~ "B",
+      score >= 70       ~ "C",
+      score >= 60       ~ "D",
+      TRUE              ~ "F"
+    )
+  )
+```
+
+# summarize
+
+```{r}
+# One row (entire dataset)
+flights |> 
+  summarize(mean_dep_delay = mean(dep_delay, na.rm = TRUE))
+```
+```{r}
+
+# One row per day
+flights |>
+  group_by(year, month, day) |>
+  summarize(mean_dep_delay = mean(dep_delay, na.rm = TRUE))
+
+```
+```{r}
+df <- data.frame(
+  cat1 = c(rep("a",3), rep("b", 3), rep("c", 3)),
+  cat2 = c("j", "j", "k", "j", "k", "k", "j", "j", "k"),
+  x = 1:9
+)
+df
+```
+
+```{r}
+
+df |> 
+  group_by(cat2) |> 
+  summarize(
+    avg   = mean(x),
+    total = sum(x),
+    n     = n()
+  )
+
+```
+```{r}
+by_dest <- flights |> 
+  group_by(dest) |> 
+  summarize(
+    n_flights = n(),
+    mean_dist = mean(distance, na.rm = TRUE),
+    mean_arr_delay = mean(arr_delay, na.rm = TRUE)
+  )
+```
+
+
+```{r}
+by_dest |> 
+  # filter(n_flights > 20, dest != "HNL") |> 
+  ggplot(aes(x = mean_dist, y = mean_arr_delay)) +
+  geom_point(aes(size = n_flights), alpha = 1/3) +
+  geom_smooth(se = FALSE)
+```
+
+
+```{r}
+by_dest |> 
+  filter(n_flights > 20, dest != "HNL") |>
+  ggplot(aes(x = mean_dist, y = mean_arr_delay)) +
+  geom_point(aes(size = n_flights), alpha = 1/3) +
+  geom_smooth(se = FALSE)
+```
+```{r}
+flights |> 
+  skim(dep_delay)
+  
+```
+
+
+```{r}
+# Missing values included → result may be NA
+flights |> 
+  group_by(year, month, day) |> 
+  summarize(mean_dep_delay = mean(dep_delay))
+
+# Missing values removed → numeric result
+flights |> 
+  group_by(year, month, day) |> 
+  summarize(mean_dep_delay = mean(dep_delay, na.rm = T))
+```
+
+```{r}
+not_cancelled <- flights |> 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+```
+
+```{r}
+not_cancelled |> 
+  skim(dep_delay, arr_delay)
+```
+
+
