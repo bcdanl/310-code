@@ -397,6 +397,7 @@ flights |>
 ```
 
 
+## Q4
 ```{r}
 flights |> 
   select(ends_with("_time"), ends_with("_delay"), -starts_with("sched"), -starts_with("air"))
