@@ -1,0 +1,571 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-02-23
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+
+
+# Scale
+
+```{r}
+library(gapminder)
+
+gapminder <- gapminder
+
+```
+
+
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = scales::dollar
+  ) +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+```{r}
+#| warning: false
+#| message: false
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands")
+  ) +
+  scale_color_colorblind(name = "conti") +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+
+```{r}
+#| warning: false
+#| message: false
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands"),
+    limits = c(0, 20000)
+  ) +
+  scale_color_colorblind(name = "conti") +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+
+
+
+```{r}
+#| warning: false
+#| message: false
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands")
+  ) +
+  scale_color_colorblind(name = "conti") +
+  coord_cartesian(xlim = c(0, 20000)) +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+
+
+
+
+```{r}
+#| warning: false
+#| message: false
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands"),
+    limits = c(0, 20000)
+  ) +
+  scale_color_colorblind(name = "conti") +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+
+
+
+```{r}
+#| warning: false
+#| message: false
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands")
+  ) +
+  scale_color_viridis_c() +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
+```{r}
+gapminder |>
+  filter(year <= 2007, year >= 1990) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = year)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = c("thousand", 
+               "five thousands", 
+               "ten thousands")
+  ) +
+  # scale_color_viridis_d() +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Year")
+```
+
+
+
+
+
+```{r}
+gapminder |>
+  filter(year <= 2007, year >= 1990) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = factor(year) )) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000)
+  ) +
+  scale_color_viridis_d() +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Year")
+```
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp, 
+             color = continent)) +
+  geom_point(size = 3) +
+  scale_color_manual(
+    values = c(
+      "Africa" = "#1b9e77",
+      "Americas" = "darkorange",
+      "Asia" = "gold4",
+      "Europe" = "#e7298a",
+      "Oceania" = "#66a61e"
+    )
+  )
+```
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(size = 3) +
+  guides(color = "none")
+```
+
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(size = 3) +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(size = 3,
+             show.legend = F)
+```
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = pop)) +
+  geom_point(alpha = 0.8) +
+  scale_color_viridis_c() +
+  guides(
+    color = 
+      guide_colorbar(
+        barheight = unit(8, "cm"),
+         ))
+```
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, color = continent)) +
+  geom_point(size = 3) +
+  guides(color = guide_legend(nrow = 3, 
+                              byrow = TRUE))
+```
+
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, color = continent)) +
+  geom_point(size = 3) +
+  guides(color = guide_legend(ncol = 2, 
+                              byrow = TRUE))
+```
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent, 
+             size = pop)) +
+  geom_point(alpha = 0.8) +
+  guides(
+    color = guide_legend(order = 2),
+    size  = guide_legend(order = 1)
+  )
+```
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(alpha = 0.2, 
+             size = 3) 
+```
+```{r}
+
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(alpha = 0.2, 
+             size = 3) +
+  guides(
+    color = 
+      guide_legend(
+        override.aes = list(alpha = 1),
+        reverse = T ))
+```
+
+
+```{r}
+p <- gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(size = 3) +
+  scale_x_log10()
+
+```
+
+
+```{r}
+p + theme_minimal()
+
+```
+
+```{r}
+p + theme_classic()
+
+```
+```{r}
+
+p + theme_light()
+```
+
+```{r}
+
+p + hrbrthemes::theme_ipsum()
+```
+```{r}
+
+p + ggthemes::theme_fivethirtyeight()
+```
+
+```{r}
+p + ggthemes::theme_fivethirtyeight() +
+  theme(legend.position = "top")
+
+```
+
+```{r}
+p
+```
+
+
+```{r}
+p +
+  labs(title = "GDP vs. Life Expectancy") +
+  theme(panel.grid.minor = element_blank(),
+        legend.title = 
+          element_text(color = "purple"),
+        plot.title = element_text(hjust = .5,
+                                  color = "blue",
+                                  face = "bold",
+                                  size = rel(2)))
+
+,
+```
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent)) +
+  geom_point(size = 3, alpha = 0.9) +
+  scale_x_log10(labels = scales::dollar) +
+  labs(
+    title = "Life expectancy vs GDP per capita (2007)",
+    subtitle = "Log x-axis; color = continent",
+    x = "GDP per capita (log scale)",
+    y = "Life expectancy",
+    color = "Continent",
+    caption = "Source: gapminder"
+  ) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold.italic"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(gdpPercap, lifeExp, 
+             color = continent, 
+             size = pop)) +
+  geom_point(alpha = 0.7) +
+
+  # SCALES: transform, breaks, labels
+  scale_x_log10(
+    breaks = c(500, 2000, 10000, 50000),
+    labels = scales::dollar
+  ) +
+  scale_size_continuous(labels = scales::label_number(scale_cut = scales::cut_si(""))) +
+
+  # GUIDES: legend order + layout
+  guides(
+    color = guide_legend(order = 1, nrow = 1),
+    size   = guide_legend(order = 2)
+  ) +
+
+  # THEME: layout + typography
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  ) +
+
+  # labels are not scales/guides/themes, but they coordinate everything
+  labs(
+    title = "Scales + Guides + Themes in one figure",
+    x = "GDP per capita (log scale)",
+    y = "Life expectancy",
+    color = "Continent",
+    size = "Population"
+  )
+```
+
+
+# Classwork 7
+```{r}
+titanic_details <- read_csv("https://bcdanl.github.io/data/titanic_details.csv")
+
+rmarkdown::paged_table(titanic_details)
+```
+
+```{r}
+p <- ggplot(titanic_details, 
+       aes(x = age, y = fare, 
+           color = factor(class),
+           size = factor(class))) +
+  geom_point(alpha = 0.6)
+
+p
+```
+
+
+```{r}
+p + 
+  geom_smooth(aes(fill = factor(class))) +
+  scale_color_viridis_d(option = "D",
+                        labels = c("First", "Second", "Third"),
+                        name = "Passenger Class") +
+  scale_fill_viridis_d(option = "D",
+                        labels = c("First", "Second", "Third"),
+                        name = "Passenger Class") +
+  scale_y_continuous(trans = "log",
+                     breaks = c(10, 50, 100, 150, 200, 250, 300),
+                     labels = scales::label_number(prefix = "USD ")) +
+  guides(
+    fill = guide_legend(
+      nrow = 1
+    ),
+    color = guide_legend(
+      nrow = 1
+    ),
+    size = "none"
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position = "left",
+    plot.title = element_text(color = "purple"),
+    axis.text.x = element_text(angle = 45),
+    axis.title.x = element_text(face = "bold",
+                                size = rel(1.5))
+  ) +
+  labs(title = "Age vs. Fare")
+```
+
+
+

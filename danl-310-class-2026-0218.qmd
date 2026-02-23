@@ -1,0 +1,346 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-02-18
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+
+```{r}
+library(tidyverse)
+flights <- nycflights13::flights
+```
+
+
+# Classwork 6
+## Q1
+Find all flights that
+
+```{r}
+# Had an arrival delay of two or more hours
+flights |> 
+  filter(arr_delay > 120)
+
+# Flew to Houston (IAH or HOU)
+flights |> 
+  filter(dest == "IAH" | dest == "HOU")
+
+flights |> 
+  filter(dest %in% c("IAH", "HOU"))
+
+# Were operated by United (UA), American (AA), or Delta (DL)
+flights |> 
+  filter(carrier %in% c("UA", "AA", "DL"))
+
+# Departed in summer (July, August, and September)
+flights |> 
+  filter(month %in% c(7,8,9))
+
+# Arrived more than two hours late, but didn’t leave late
+flights |> 
+  filter(arr_delay > 120,
+         dep_delay <= 0)
+
+# Were delayed by at least an hour for the depature, but reduced the delay over 30 minutes during flight
+flights |> 
+  filter(dep_delay >= 60,
+         dep_delay - arr_delay  > 30) |> 
+  select(dep_delay, arr_delay)
+
+# Departed between midnight and 6am (inclusive)
+
+flights |> 
+  filter( dep_time >= 0 , dep_time <= 600 ) |> 
+  arrange(dep_time)
+
+
+flights |> 
+  filter( (dep_time >= 0 & dep_time <= 600) | dep_time == 2400 ) |> 
+  arrange(-dep_time)
+
+```
+
+
+## Q2
+
+How could you use `arrange()` to sort all missing values to the start?
+
+```{r}
+flights |> 
+  skimr::skim(dep_delay)
+
+flights |> 
+  arrange(dep_delay)
+
+```
+
+```{r}
+
+flights |> 
+  arrange( desc( is.na(dep_delay) ) )
+
+```
+
+## Q3
+
+Brainstorm as many ways as possible to select `dep_time`, `dep_delay`, `arr_time`, and `arr_delay` from flights.
+
+
+
+```{r}
+flights |> 
+  select(starts_with("dep"), starts_with("arr"))
+```
+
+
+```{r}
+flights |> 
+  select(ends_with("_time"), ends_with("_delay"), -starts_with("sched"), -starts_with("air"))
+```
+
+
+
+## Q4
+
+Find the 10 most delayed flights using a ranking function.
+
+How do you want to handle ties?
+
+```{r}
+q4_arr <- flights |> 
+  mutate(rank_min = min_rank(-arr_delay),
+         rank_dense = dense_rank(-arr_delay),
+         ) |> 
+  arrange(rank_dense) |> 
+  relocate(starts_with("rank"), arr_delay)
+```
+
+```{r}
+q4_dep <- flights |> 
+  mutate(rank_min = min_rank(-dep_delay),
+         rank_dense = dense_rank(-dep_delay),
+         ) |> 
+  arrange(rank_dense) |> 
+  relocate(starts_with("rank"), dep_delay)
+```
+
+
+
+## Q5
+Which carrier has the worst arrival delays within each origin airport?
+
+```{r}
+q5 <- flights |> 
+  group_by(origin) |> 
+  filter(arr_delay == max(arr_delay, na.rm = T)) |> 
+  relocate(origin, carrier, arr_delay)
+  
+```
+
+
+
+## Q6
+
+Which plane (`tailnum`) has the worst on-time arrival record?
+
+
+```{r}
+q6 <- flights |> 
+  filter(arr_delay == max(arr_delay, na.rm = T)) |> 
+  relocate(tailnum)
+```
+
+
+
+## Q7
+
+What time of day should you fly if you want to avoid delays as much as possible?
+
+
+```{r}
+
+q7 <- flights |> 
+  mutate(is_delayed = ifelse(arr_delay >= 30, T, F)) |> 
+  count(hour, is_delayed) |> 
+  group_by(hour) |> 
+  mutate(prop = 100 * n / sum(n)) |> 
+  filter(is_delayed) |> 
+  arrange(prop)
+```
+
+
+
+## Q8
+
+For each destination, compute the total minutes of delay. For each flight, compute the proportion of the total delay for its destination.
+
+
+```{r}
+q8 <- flights |> 
+  group_by(dest) |> 
+  mutate(tot_pos_dep_delay = sum(dep_delay[dep_delay > 0], na.rm = T),
+         tot_pos_arr_delay = sum(arr_delay[arr_delay > 0], na.rm = T),
+         tot_neg_dep_delay = sum(dep_delay[dep_delay < 0], na.rm = T),
+         tot_neg_arr_delay = sum(arr_delay[arr_delay < 0], na.rm = T)
+         ) |> 
+  mutate(prop_pos_dep_delay = dep_delay / tot_pos_dep_delay,
+         prop_pos_arr_delay = arr_delay / tot_pos_arr_delay,
+         prop_neg_dep_delay = dep_delay / tot_neg_dep_delay,
+         prop_neg_arr_delay = arr_delay / tot_neg_arr_delay,
+         
+         prop_pos_dep_delay = ifelse(prop_pos_dep_delay <= 0, NA, prop_pos_dep_delay),
+         prop_pos_arr_delay = ifelse(prop_pos_arr_delay <= 0, NA, prop_pos_arr_delay),
+         
+         prop_neg_dep_delay = ifelse(prop_neg_dep_delay > 0, NA, prop_neg_dep_delay),
+         prop_neg_arr_delay = ifelse(prop_pos_arr_delay > 0, NA, prop_neg_arr_delay)
+         ) |> 
+  select(dest, dep_delay, arr_delay, starts_with("tot"), starts_with("prop"))
+```
+
+
+## Q9
+
+Find all destinations that are flown by at least two carriers. 
+
+Use that information to rank the carriers.
+
+```{r}
+flights |> 
+  count(dest) |> 
+  nrow()
+```
+
+
+```{r}
+q9 <- flights |> 
+  count(dest, carrier) |> 
+  group_by(dest) |> 
+  filter( n() >= 2 ) |> 
+  group_by(carrier) |> 
+  summarize(tot_flights = sum(n),
+            n_dest = n()) |> 
+  arrange(-tot_flights)
+```
+
+
+## Q10
+```{r}
+tech_stocks <- read_csv(
+  "https://bcdanl.github.io/data/tech_stocks_2015_2024.csv"
+)
+```
+```{r}
+tech_stocks |> 
+  count(Ticker)
+```
+For each `Ticker`, compute the daily stock return as the percent change in the `Close` price from the previous trading day to the current day.
+
+$$
+(\text{Stock Return}_{d}) = \frac{(\text{Close}_{d}) - (\text{Close}_{d-1})}{(\text{Close}_{d-1})}
+$$
+
+```{r}
+q10 <- tech_stocks |> 
+  group_by(Ticker) |> 
+  mutate(Close_lag = lag(Close)) |> 
+  select(Date, Ticker, starts_with("Close"), Volume) |> 
+  mutate(return = 100 * (Close - Close_lag) / Close_lag,
+         return_rounded = round(return, 2))
+```
+
+
+
+## Q11
+
+```{r}
+q10 |> 
+  ggplot(aes(x = return, y = Volume)) +
+  geom_point(alpha = .1) +
+  geom_smooth()
+```
+```{r}
+q10 |> 
+  ggplot(aes(x = return, y = Volume,
+             color = Ticker,
+             fill = Ticker)) +
+  geom_point(alpha = .1) +
+  geom_smooth()
+```
+
+# Scale
+
+```{r}
+library(gapminder)
+
+gapminder <- gapminder
+
+```
+
+
+
+
+```{r}
+gapminder |>
+  filter(year == 2007) |>
+  ggplot(aes(x = gdpPercap, 
+             y = lifeExp,
+             color = continent)) +
+  geom_point(alpha = 0.8,
+             size = 3) +
+  geom_smooth(se = F) +
+  scale_x_continuous(
+    breaks = c(1000, 10000, 50000),
+    labels = scales::dollar
+  ) +
+  labs(
+    x = "GDP per capita",
+    y = "Life expectancy",
+    color = "Continent")
+```
+
+
