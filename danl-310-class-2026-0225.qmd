@@ -1,0 +1,327 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-02-23
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+
+
+
+# Classwork 7
+
+## Part 1
+```{r}
+titanic_details <- read_csv("https://bcdanl.github.io/data/titanic_details.csv")
+
+rmarkdown::paged_table(titanic_details)
+```
+
+```{r}
+p <- ggplot(titanic_details, 
+       aes(x = age, y = fare, 
+           color = factor(class),
+           size = factor(class))) +
+  geom_point(alpha = 0.6)
+
+p
+```
+
+
+```{r}
+#| warning: false
+#| message: false
+
+p + 
+  geom_smooth(aes(fill = factor(class))) +
+  scale_color_viridis_d(option = "D",
+                        labels = c("First", "Second", "Third"),
+                        name = "Passenger Class") +
+  scale_fill_viridis_d(option = "D",
+                        labels = c("First", "Second", "Third"),
+                        name = "Passenger Class") +
+  scale_y_continuous(trans = "log",
+                     breaks = c(10, 50, 100, 150, 200, 250, 300),
+                     labels = scales::label_number(prefix = "USD ",
+                                                   suffix = " (1999 value)")) +
+  guides(
+    color = guide_legend(
+      nrow = 1,
+      keywidth = 5,
+      reverse = T,
+      label.position = "bottom",
+      title.position = "left"
+    ),
+    # fill = guide_legend(
+    #   nrow = 1
+    # ),
+    # color = "none",
+    fill = "none",
+    size = "none"
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position = c(.25,.5),   # "top", "right", "bottom", "left", c(.5,.5)
+    plot.title = element_text(color = "purple",
+                              face = "bold.italic",
+                              size = rel(1.5),
+                              hjust = .5),
+    axis.text.x = element_text(angle = 45),
+    axis.title.x = element_text(face = "bold",
+                                size = rel(1.5),
+                                hjust = 1,
+                                margin = margin(30,0,0,0)),
+    axis.title.y = element_text(face = "bold",
+                                size = rel(1.5),
+                                hjust = 1,
+                                margin = margin(0,50,0,0))
+  ) +
+  labs(title = "Age vs. Fare")
+```
+
+
+
+## Part 2
+
+```{r}
+# install.packages("socviz")
+organdata <- socviz::organdata
+
+organdata |> 
+  rmarkdown::paged_table()
+```
+
+
+
+```{r}
+
+# donors. Organ Donation rate per million population.
+# roads. Road accident fatalities per 100,000 population.
+# world. Welfare state world (Esping Andersen.)
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads,
+                          y = donors,
+                          color = world))
+p + geom_point()
+```
+
+
+- Put roads on a log10 scale.
+- Make y-axis text break at 5, 15, and 25
+- Make y-axis text appear as “Five”, “Fifteen”, and “Twenty Five”
+- Set color legend categories as
+  - “Corporatist”
+  - “Liberal”,
+  - “Social Democratic”
+  - “Unclassified”
+
+
+```{r}
+organdata |> 
+  mutate(world = ifelse(is.na(world), "Unclassified", world),
+         world = ifelse(world == "SocDem", "Social Democratic", world),
+         ) |> 
+  skim(world)
+```
+
+
+```{r}
+organdata |> 
+  mutate(world = ifelse(is.na(world), "Unclassified", world),
+         world = ifelse(world == "SocDem", "Social Democratic", world),
+         ) |> 
+  ggplot(mapping = aes(x = roads,
+                          y = donors,
+                          color = world)) +
+  geom_point()
+```
+
+```{r}
+p + 
+  geom_point() +
+  scale_x_log10() +
+  scale_y_continuous(breaks = c(5, 15, 25),
+                     labels = c("Five", "Fifteen", "Twenty Five")) +
+  scale_color_tableau(
+    labels = c("Coporalist", 
+               "Liberal",
+               "Social Democratic",
+               "Unclassified"),
+    na.value = "grey60"
+  ) +
+  theme_ipsum() +
+  theme(legend.position = "top") +
+  guides(color = 
+           guide_legend(label.position = "bottom",
+                        keywidth = 3,
+                        override.aes = list(size = 5))) +
+  labs(color = "World")
+```
+
+
+
+
+## Part 3
+```{r}
+brexit <- read_csv('https://bcdanl.github.io/data/brexit.csv')
+```
+### Question 5
+
+```{r}
+p_title <- "Was Britain right/wrong to vote to leave?"
+p_subtitle <- "YouGov Survey Results, 2-3 September, 2019"
+p_caption <- "Source: bit.ly/2lCJZVg"
+p_facet_labels <- c(
+  london = "London",
+  rest_of_south = "Rest of\n South",
+  midlands_wales = "Midlands /\n Wales",
+  north = "North",
+  scot = "Scotland"
+)
+
+brexit <- brexit |> 
+  mutate(region = factor(region,
+                         levels = c("london", "rest_of_south", "midlands_wales", "north", "scot")))
+
+p <- ggplot(data = brexit,
+            aes(y = opinion, fill = opinion))
+```
+
+
+```{r}
+p +
+  geom_bar() +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(x = "",
+       title = p_title,
+       subtitle = p_subtitle,
+       caption = p_caption)
+```
+
+### Question 6
+
+```{r}
+p +
+  geom_bar() +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels),
+             scales = "free_x") +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(x = "",
+       title = p_title,
+       subtitle = p_subtitle,
+       caption = p_caption)
+```
+
+### Question 7
+
+```{r}
+df <- brexit |> 
+  count(opinion, region) |> 
+  group_by(region) |> 
+  mutate(prop = n / sum(n))
+
+df |> 
+  ggplot(aes(x = prop,
+             y = opinion,
+             fill = opinion)) +
+  geom_col() +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels)) +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  hrbrthemes::scale_x_percent() +
+  guides(fill = "none") +
+  theme_minimal() +
+  labs(x = "Percent")
+
+```
+### Question 8
+
+```{r}
+p_facet_labels <- c(
+  london = "London",
+  rest_of_south = "Rest of\n South",
+  midlands_wales = "Midlands /\n Wales",
+  north = "North",
+  scot = "Scotland"
+)
+
+
+df |> 
+  mutate(region = factor(region,
+                         levels = c('london','rest_of_south','midlands_wales','north','scot'),
+    labels = c("London",
+    "Rest of\n South",
+    "Midlands /\n Wales",
+    "North",
+    "Scotland")
+  )) |> 
+  ggplot(aes(x = prop,
+             y = region,
+             fill = opinion)) +
+  geom_col(position = "dodge2") +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  hrbrthemes::scale_x_percent() +
+  guides(fill = "none") +
+  theme_minimal() +
+  labs(x = "Percent",
+       y = "")
+```
+
+
+

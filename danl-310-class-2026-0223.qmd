@@ -536,6 +536,9 @@ p
 
 
 ```{r}
+#| warning: false
+#| message: false
+
 p + 
   geom_smooth(aes(fill = factor(class))) +
   scale_color_viridis_d(option = "D",
@@ -546,23 +549,39 @@ p +
                         name = "Passenger Class") +
   scale_y_continuous(trans = "log",
                      breaks = c(10, 50, 100, 150, 200, 250, 300),
-                     labels = scales::label_number(prefix = "USD ")) +
+                     labels = scales::label_number(prefix = "USD ",
+                                                   suffix = " (1999 value)")) +
   guides(
-    fill = guide_legend(
-      nrow = 1
-    ),
     color = guide_legend(
-      nrow = 1
+      nrow = 1,
+      keywidth = 5,
+      reverse = T,
+      label.position = "bottom",
+      title.position = "left"
     ),
+    # fill = guide_legend(
+    #   nrow = 1
+    # ),
+    # color = "none",
+    fill = "none",
     size = "none"
   ) +
   theme(
     panel.grid.minor = element_blank(),
-    legend.position = "left",
-    plot.title = element_text(color = "purple"),
+    legend.position = c(.25,.5),   # "top", "right", "bottom", "left", c(.5,.5)
+    plot.title = element_text(color = "purple",
+                              face = "bold.italic",
+                              size = rel(1.5),
+                              hjust = .5),
     axis.text.x = element_text(angle = 45),
     axis.title.x = element_text(face = "bold",
-                                size = rel(1.5))
+                                size = rel(1.5),
+                                hjust = 1,
+                                margin = margin(30,0,0,0)),
+    axis.title.y = element_text(face = "bold",
+                                size = rel(1.5),
+                                hjust = 1,
+                                margin = margin(0,50,0,0))
   ) +
   labs(title = "Age vs. Fare")
 ```
