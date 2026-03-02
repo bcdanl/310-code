@@ -5,7 +5,7 @@ author:
   - name: Byeong-Hak Choe
     affiliation: SUNY Geneseo
     
-date: 2026-02-23
+date: 2026-02-25
 
 execute: 
   echo: true
@@ -284,7 +284,8 @@ df |>
              nrow = 1,
              labeller = as_labeller(p_facet_labels)) +
   scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
-  hrbrthemes::scale_x_percent() +
+  scale_x_percent() +
+  # scale_x_continuous(labels = scales::percent)
   guides(fill = "none") +
   theme_minimal() +
   labs(x = "Percent")
@@ -314,7 +315,8 @@ df |>
   ggplot(aes(x = prop,
              y = region,
              fill = opinion)) +
-  geom_col(position = "dodge2") +
+  # geom_col(position = "dodge2") +
+  geom_col(position = position_dodge2()) +
   scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
   hrbrthemes::scale_x_percent() +
   guides(fill = "none") +

@@ -1,0 +1,314 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-03-02
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+
+
+
+# Classwork 7
+
+## Part 3
+```{r}
+brexit <- read_csv('https://bcdanl.github.io/data/brexit.csv')
+```
+### Question 5
+
+```{r}
+p_title <- "Was Britain right/wrong to vote to leave?"
+p_subtitle <- "YouGov Survey Results, 2-3 September, 2019"
+p_caption <- "Source: bit.ly/2lCJZVg"
+p_facet_labels <- c(
+  london = "London",
+  rest_of_south = "Rest of\n South",
+  midlands_wales = "Midlands /\n Wales",
+  north = "North",
+  scot = "Scotland"
+)
+
+brexit <- brexit |> 
+  mutate(region = factor(region,
+                         levels = c("london", "rest_of_south", "midlands_wales", "north", "scot")))
+
+p <- ggplot(data = brexit,
+            aes(y = opinion, fill = opinion))
+```
+
+
+```{r}
+p +
+  geom_bar() +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(x = "",
+       title = p_title,
+       subtitle = p_subtitle,
+       caption = p_caption)
+```
+
+### Question 6
+
+```{r}
+p +
+  geom_bar() +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels),
+             scales = "free_x") +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(x = "",
+       title = p_title,
+       subtitle = p_subtitle,
+       caption = p_caption)
+```
+
+### Question 7
+
+```{r}
+df <- brexit |> 
+  count(opinion, region) |> 
+  group_by(region) |> 
+  mutate(prop = n / sum(n))
+
+df |> 
+  ggplot(aes(x = prop,
+             y = opinion,
+             fill = opinion)) +
+  geom_col() +
+  facet_wrap(~ region, 
+             nrow = 1,
+             labeller = as_labeller(p_facet_labels)) +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  scale_x_percent() +
+  # scale_x_continuous(labels = scales::percent)
+  guides(fill = "none") +
+  theme_minimal() +
+  labs(x = "Percent")
+
+```
+### Question 8
+
+```{r}
+p_facet_labels <- c(
+  london = "London",
+  rest_of_south = "Rest of\n South",
+  midlands_wales = "Midlands /\n Wales",
+  north = "North",
+  scot = "Scotland"
+)
+
+
+df |> 
+  mutate(region = factor(region,
+                         levels = c('london','rest_of_south','midlands_wales','north','scot'),
+    labels = c("London",
+    "Rest of\n South",
+    "Midlands /\n Wales",
+    "North",
+    "Scotland")
+  )) |> 
+  ggplot(aes(x = prop,
+             y = region,
+             fill = opinion)) +
+  # geom_col(position = "dodge2") +
+  geom_col(position = position_dodge2()) +
+  scale_fill_manual(values = c("gray", "#67a9cf", "#ef8a62")) +
+  hrbrthemes::scale_x_percent() +
+  guides(fill = "none") +
+  theme_minimal() +
+  labs(x = "Percent",
+       y = "")
+```
+
+
+## Part 4
+```{r}
+studebt <- socviz::studebt
+```
+
+### Question 9
+Use the following colors:
+
+- “#1B9E77”
+- “#D95F02”
+
+
+```{r}
+p_type_lbl <- c(
+  Borrowers = "Percent of\n all Borrowers",
+  Balances = "Percent of\n all Balances"
+)
+
+p_title <- "Outstanding Student Loans"
+p_subtitle <- "44 million borrowers owe a total of $1.3 trillion"
+p_caption <- "Source: FRB"
+
+studebt |> 
+  ggplot(aes(x = pct/100,
+             y = Debt,
+             fill = type)) +
+  geom_col() +
+  facet_wrap(~type,
+             labeller = as_labeller(p_type_lbl)) +
+  scale_x_percent() +
+  scale_fill_manual(values = c("#1B9E77", "#D95F02")) +
+  labs(
+    x = NULL, 
+    y = "Amount Owed, in thousands of Dollars",
+    title = p_title,
+    subtitle = p_subtitle,
+    caption = p_caption
+  ) +
+  guides(fill = "none") +
+    theme_ipsum()
+  
+
+```
+
+
+
+
+```{r}
+p_type_lbl <- c(
+  Borrowers = "Percent of\n all Borrowers",
+  Balances = "Percent of\n all Balances"
+)
+
+p_title <- "Outstanding Student Loans"
+p_subtitle <- "44 million borrowers owe a total of $1.3 trillion"
+p_caption <- "Source: FRB"
+
+studebt |> 
+  ggplot(aes(x = pct/100,
+             y = Debt,
+             fill = type)) +
+  geom_col() +
+  facet_wrap(~type,
+             labeller = as_labeller(p_type_lbl)) +
+  scale_x_percent() +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(
+    x = NULL, 
+    y = "Amount Owed, in thousands of Dollars",
+    title = p_title,
+    subtitle = p_subtitle,
+    caption = p_caption
+  ) +
+  guides(fill = "none") +
+    theme_ipsum()
+  
+
+```
+
+### Question 10
+
+```{r}
+
+studebt |> 
+  mutate(type = factor(type,
+                       levels = c("Borrowers", 
+                                  "Balances"),
+                       labels = c("Percent of\n all Borrowers",
+                                  "Percent of\n all Balances")
+                       )
+         ) |> 
+  ggplot(aes(x = pct/100,
+             y = type,
+             fill = Debtrc)) +
+  geom_col() +
+  scale_x_percent()  +
+  # scale_fill_viridis_d(option = "D") + # options: A, B, C, and D 
+  labs(
+    x = NULL, 
+    y = NULL,
+    title = p_title,
+    subtitle = p_subtitle,
+    caption = p_caption,
+    fill = "Amount Owed, in thousands of Dollars"
+  ) +
+  theme_ipsum() +
+  theme(
+    legend.position = "top",
+    legend.title.position = "top",
+    legend.title = element_text(hjust = .5)
+  ) +
+  guides(
+    fill = guide_legend(nrow = 1,
+                        label.position = "bottom",
+                        keywidth = 3,
+                        reverse = T)
+  )
+
+```
+
+
+# RColorBrewer
+
+```{r}
+#| fig-height: 8
+library(RColorBrewer)
+display.brewer.all()
+```
+```{r}
+brewer.pal.info  # check the 'maxcolors' column
+
+```
+
+```{r}
+# Get 5 hex codes from the "Set2" palette
+brewer.pal(n = 5, name = "Set2")
+```
+
