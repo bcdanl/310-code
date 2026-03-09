@@ -1,0 +1,325 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-03-09
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+```{r}
+library(tidyverse)
+gss_cat <- gss_cat
+```
+
+
+# fct_reorder2
+```{r}
+by_age <- gss_cat |>
+  filter(!is.na(age)) |>
+  count(age, marital) |>
+  group_by(age) |>
+  mutate(prop = n / sum(n))
+
+# Default legend order (alphabetical)
+ggplot(by_age, 
+       aes(x = age, y = prop, 
+           color = marital)) +
+  geom_line(linewidth = 1) +
+  scale_color_brewer(palette = "Set1")
+
+```
+
+
+```{r}
+#| fig-height: 10
+# Legend order follows the line endings at the largest age
+ggplot(by_age, aes(x = age, y = prop,
+                   color = fct_reorder2(marital, age, prop))) +
+  geom_line(linewidth = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs(color = "marital")
+```
+
+# fct_relevel
+```{r}
+rincome_summary <- gss_cat |>
+  group_by(rincome) |>
+  summarize(
+    age = mean(age, na.rm = T),
+    tvhours = mean(tvhours, na.rm = T),
+    n = n()
+  )
+```
+
+
+```{r}
+ggplot(rincome_summary, 
+       aes(age, fct_reorder(rincome, age) ) )  + 
+  geom_point()
+```
+```{r}
+levels(rincome_summary$rincome)
+```
+
+
+```{r}
+ggplot(rincome_summary, 
+       aes(age, 
+           fct_relevel(rincome, 
+                       "Not applicable") ) )  +  # making it to the first level
+  geom_point()
+```
+
+
+# str_c()
+
+```{r}
+str_length(c("a", "R for data science", NA))
+
+str_c("x", "y", "z")
+
+str_c(c("x", "y", "z"), 
+      sep = ", ")
+
+
+str_c("prefix-", c("a", "b", "c"), "-suffix")
+
+
+str_c(c("x", "y", "z"), collapse = ", ")
+```
+
+
+# str_split()
+
+```{r}
+sentences
+```
+
+```{r}
+sentences |>
+  head(5) |> 
+  str_split(" ")
+```
+```{r}
+x <- c("Apple", "Banana", "Pear")
+str_sub(x, 1, 3)
+
+## negative numbers count backwards from end
+str_sub(x, -3, -1)
+```
+
+
+```{r}
+x <- c("apple", "banana", "pear")
+
+str_detect(x, "e")
+
+str_replace(x, "a", "-")
+
+str_replace_all(x, "a", "-")
+```
+
+
+
+# Classwork 8
+
+```{r}
+uk_soccer <- read_csv("https://bcdanl.github.io/data/premier_league_2022.csv")
+
+rmarkdown::paged_table(uk_soccer)
+```
+
+
+## Q1a
+
+```{r}
+tott_home <- uk_soccer |> 
+  filter(HomeTeam == "Tottenham") |> 
+  select(FTR, HTR)
+
+tott_away <- uk_soccer |> 
+  filter(AwayTeam == "Tottenham") |> 
+  select(FTR, HTR)
+```
+
+
+## Q1b
+Create the following four data.frames.
+`home_htr` that counts the number of observations for each value of HTR in tott_home.
+`home_ftr` that counts the number of observations for each value of FTR in tott_home.
+`away_htr` that counts the number of observations for each value of HTR in tott_away.
+`away_ftr` that counts the number of observations for each value of FTR in tott_away.
+```{r}
+home_htr <- tott_home |> 
+  count(HTR)
+
+home_ftr <- tott_home |> 
+  count(FTR)
+
+away_htr <- tott_away |> 
+  count(HTR)
+
+away_ftr <- tott_away |> 
+  count(FTR)
+
+```
+
+
+## Q1c
+
+Create the following two data.frames:
+`home_results` is created using `home_ftr` and `home_htr`;
+`away_results` is created using `away_ftr` and `away_htr`.
+
+```{r}
+home_results <- cbind(home_ftr, 
+                      home_htr)
+
+colnames(home_results) <- c("result", "FTR", "tmp", "HTR")
+
+home_results <- home_results|> 
+  mutate(tott_location = "Home",
+         .before = 0) |> 
+  select(-tmp) 
+```
+
+
+```{r}
+away_results <- cbind(away_ftr, 
+                      away_htr)
+
+colnames(away_results) <- c("result", "FTR", "tmp", "HTR")
+
+away_results <- away_results|> 
+  mutate(tott_location = "Away",
+         .before = 0) |> 
+  select(-tmp) 
+```
+
+## Q1d
+```{r}
+home_results <- home_results |> 
+  mutate(result = case_when(
+    result == "A" ~ "Lose",
+    result == "D" ~ "Draw",
+    result == "H" ~ "Win"
+  ))
+```
+
+
+```{r}
+away_results <- away_results |> 
+  mutate(result = case_when(
+    result == "A" ~ "Win",
+    result == "D" ~ "Draw",
+    result == "H" ~ "Lose"
+  ))
+```
+
+
+## Q1e
+
+```{r}
+home_results_longer <- home_results |> 
+  pivot_longer(cols = FTR:HTR,
+               names_to = "time",
+               values_to = "count")
+```
+
+```{r}
+away_results_longer <- away_results |> 
+  pivot_longer(cols = FTR:HTR,
+               names_to = "time",
+               values_to = "count")
+```
+
+```{r}
+tott_results <- rbind(home_results_longer,
+                      away_results_longer)
+```
+
+
+## Q1f
+
+```{r}
+tott_results |> 
+  mutate(time = ifelse(time == "FTR", 
+                       "Full-Time", "Half-Time"),
+         time = factor(time,
+                       levels = c("Full-Time",
+                                  "Half-Time")
+                       ),
+         result = factor(result,
+                         levels = c("Win", "Draw", "Lose"))
+         ) |> 
+  ggplot(aes(x = result,
+             y = count,
+             fill = time)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~tott_location) +
+  scale_fill_colorblind() +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    legend.title.position = "top",
+    legend.title = element_text(hjust = .5,
+                                face = "bold"),
+    legend.text = element_text(hjust = .5,
+                                face = "italic"),
+    strip.background = element_rect(fill = "hotpink",
+                                    color = "black")
+  ) +
+  guides(
+    fill = guide_legend(
+      label.position = "bottom",
+      keywidth = 3
+    )
+  )
+```
+
+
+
