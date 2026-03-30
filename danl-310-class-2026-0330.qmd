@@ -1,0 +1,514 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-03-30
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+library(DT)
+
+# theme_set(theme_ipsum()+
+#           theme(strip.background =element_rect(fill="lightgray"),
+#                 axis.title.x =
+#                   element_text(angle = 0,
+#                                size = rel(1.33),
+#                                margin = margin(10,0,0,0)),
+#                 axis.title.y =
+#                   element_text(angle = 90,
+#                                size = rel(1.33),
+#                                margin = margin(0,10,0,0))
+#                 )
+#           )
+```
+
+
+
+# Classwork 9
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+library(rmarkdown)
+library(hrbrthemes)
+library(ggthemes)
+
+ev <- read_csv("https://bcdanl.github.io/data/electric_vehicles_WA.csv")
+
+ev |> 
+  paged_table()
+```
+
+
+## Q1
+
+Top 10 counties by number of EVs
+```{r}
+top10_counties <- ev |> 
+  count(county) |> 
+  slice_max(n, n = 10,
+            with_ties = T)
+
+```
+
+
+Top 10 makes by number of EVs
+```{r}
+top10_makers <- ev |> 
+  count(make) |> 
+  slice_max(n, n = 10,
+            with_ties = T)
+
+```
+
+
+Average electric range for makes with at least 500 vehicles
+```{r}
+avg_electric_range <- ev |> 
+  group_by(make) |> 
+  summarize(n = n(),
+            avg_range = mean(electric_range, na.rm = T),
+            avg_range = round(avg_range, 2)) |> 
+  filter(n >= 500) |> 
+  arrange(-avg_range,-n) |> 
+  rename(n_make = n)
+```
+
+
+
+## Q2
+
+```{r}
+avg_electric_range |> 
+  ggplot(aes(x = n_make,
+             y = avg_range,
+             label = make)) +
+  geom_point(alpha = .5) +
+  geom_text() +
+  theme_ipsum()
+```
+
+## Q3
+
+```{r}
+#| fig-height: 10
+avg_electric_range |> 
+  mutate(tesla = ifelse(make == "TESLA", T, F)) |> 
+  ggplot(aes(x = n_make,
+             y = avg_range,
+             label = make)) +
+  geom_point(alpha = .5) +
+  geom_text(size = 7.5,
+            hjust = 0,
+            vjust = 1,
+            nudge_x = 500,
+            check_overlap = T,
+            aes(color = tesla),
+            show.legend = F) +
+  scale_color_manual(values = c( "grey", "maroon"))
+  theme_ipsum() 
+```
+
+## Q4
+```{r}
+avg_electric_range |> 
+  mutate(tesla = ifelse(make == "TESLA", T, F)) |> 
+  ggplot(aes(x = n_make,
+             y = avg_range,
+             label = make)) +
+  geom_point(alpha = .5) +
+  geom_text_repel(size = 7.5,
+            aes(color = tesla),
+            show.legend = F,
+            max.overlaps = 15,
+            box.padding = .5) +
+  scale_color_manual(values = c( "grey", "maroon"))
+  theme_ipsum() 
+```
+
+## Q5
+
+
+```{r}
+avg_electric_range |> 
+  mutate(tesla = ifelse(make == "TESLA", T, F)) |> 
+  ggplot(aes(x = n_make,
+             y = avg_range,
+             label = make)) +
+  geom_point(alpha = .5) +
+  geom_text_repel(size = 7.5,
+            aes(color = tesla),
+            show.legend = F,
+            max.overlaps = 15,
+            box.padding = .5) + 
+  annotate(
+    geom = "label",
+    label = "Highest average range",
+    x = 70000,
+    y = 80
+  ) +
+  annotate(
+    geom = "segment",
+    x = 70000, xend = 17135,
+    y = 84.90, yend = 84.90,
+    color = "darkorange",
+    linewidth = 0.7,
+    arrow = arrow(length = 
+                    unit(0.15, "in"))
+  ) +
+  annotate(
+    geom = "rect",
+    label = "Highest average range",
+    xmin = 17135 * .8, xmax = 17135 * 1.2,
+    ymin = 84.90 * .975, ymax = 92.5 * 1.02,
+    fill = "darkorange",
+    alpha = .5
+  ) +
+  
+  scale_color_manual(values = c( "grey", "maroon"))
+  theme_ipsum()
+```
+
+
+## Q6
+
+
+```{r}
+
+top10_counties |> 
+  mutate(
+    county = fct_reorder(county, n)
+  ) |> 
+  ggplot(aes(x = n,
+             y = county,
+             fill = county)) +
+  geom_col() +
+  geom_text(aes( label = scales::comma( n ) ),
+            hjust = 0,
+            nudge_x = 1000
+            ) +
+  scale_fill_viridis_d() +
+  hrbrthemes::scale_x_comma(limits = c(0, max(top10_counties$n)*1.15)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(y = "",
+       x = "Number of EVs")
+```
+
+
+```{r}
+
+top10_counties |> 
+  mutate(
+    county = fct_reorder(county, n),
+    pct = round( n / sum(n), 2)
+  ) |> 
+  ggplot(aes(x = n,
+             y = county,
+             fill = county)) +
+  geom_col() +
+  geom_text(aes( label = scales::percent(pct) ),
+            hjust = 0,
+            nudge_x = 1000
+            ) +
+  scale_fill_viridis_d() +
+  scale_x_comma(limits = c(0, max(top10_counties$n)*1.15),
+                breaks = seq(0,125000, 25000)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(y = "",
+       x = "Number of EVs")
+```
+
+
+## Q7
+
+```{r}
+ev_type <- ev |> 
+  count(electric_vehicle_type)
+
+
+# geom_col()
+# geom_bar(stat = "identity")
+
+ev_type |> 
+  mutate(
+    electric_vehicle_type = fct_reorder(electric_vehicle_type, n)
+  ) |> 
+  ggplot(aes(x = n,
+             y = electric_vehicle_type,
+             fill = electric_vehicle_type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes( label = scales::comma(n) ),
+            hjust = 0,
+            nudge_x = 1000
+            ) +
+  scale_fill_viridis_d() +
+  scale_x_comma(limits = c(0, max(ev_type$n)*1.15)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(y = "",
+       x = "Number of EVs")
+```
+
+
+## Q8
+
+
+
+```{r}
+
+top10_counties |> 
+  mutate(
+    county = fct_reorder(county, n)
+  ) |> 
+  ggplot(aes(x = n,
+             y = county,
+             fill = county)) +
+  geom_col() +
+  geom_text(aes( label = scales::comma(n) ),
+            hjust = 0,
+            nudge_x = 1000
+            ) +
+  scale_fill_manual(
+    values = c(rep("grey", 9), "red4")
+  ) +
+  scale_x_comma(limits = c(0, max(top10_counties$n)*1.15)) +
+  guides(fill = "none") +
+  theme_ipsum() +
+  labs(y = "",
+       x = "Number of EVs")
+```
+
+
+
+
+
+
+# Dumbbell Chart
+
+```{r}
+gap_dumbbell <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), continent == "Asia") |>
+  select(country, year, lifeExp) |>
+  pivot_wider(names_from = year,
+              values_from = lifeExp,
+              names_prefix = "year_") |>
+  mutate(change = year_2007 - year_1952) |>
+  slice_max(change, n = 12) |>
+  arrange(change) |>
+  mutate(country = fct_inorder(country))
+```
+
+
+
+# Slope Graphs
+
+```{r}
+gap_slope <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), 
+         country %in% c("United States", "Canada", "Japan") | 
+           str_detect(country, "Korea")) |>
+  select(country, year, gdpPercap) |>
+  mutate(year = factor(year)) |>
+  group_by(country) |>
+  summarize(
+    `1952` = gdpPercap[year == "1952"],
+    `2007` = gdpPercap[year == "2007"]) |>
+  ungroup() |> 
+  mutate(change = `2007` - `1952`) |>
+  slice_max(change, n = 12)
+
+gap_slope_long <- gap_slope |>
+  pivot_longer(cols = c(`1952`, `2007`),
+               names_to = "year", values_to = "gdpPercap")
+
+```
+
+
+```{r}
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, 
+           group = country, 
+           color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "1952"),
+    aes(label = country),
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "2007"),
+    aes(label = country),
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  # coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme(plot.margin = margin(10, 60, 10, 60))
+```
+
+```{r}
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, 
+           group = country, 
+           color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "1952"),
+    aes(label = country),
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "2007"),
+    aes(label = country),
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme(plot.margin = margin(10, 60, 10, 60))
+```
+
+
+
+```{r}
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, 
+           group = country, 
+           color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text_repel(
+    data = gap_slope_long |> filter(year == "1952"),
+    aes(label = country),
+    direction = "x",
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text_repel(
+    data = gap_slope_long |> filter(year == "2007"),
+    aes(label = country),
+    direction = "x",
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme(plot.margin = margin(10, 60, 10, 60))
+```
+
+
+```{r}
+gap_slope <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), 
+         country %in% c("United States", "Canada", "Japan") | 
+           str_detect(country, "Korea")) |>
+  select(country, year, gdpPercap) |>
+  # mutate(year = factor(year)) |>
+  group_by(country) |>
+  summarize(
+    `1952` = gdpPercap[year == 1952],
+    `2007` = gdpPercap[year == 2007]) |>
+  ungroup() |> 
+  mutate(change = `2007` - `1952`) |>
+  slice_max(change, n = 12)
+
+gap_slope_long <- gap_slope |>
+  pivot_longer(cols = c(`1952`, `2007`),
+               names_to = "year", values_to = "gdpPercap")
+
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, 
+           group = country, 
+           color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text_repel(
+    data = gap_slope_long |> filter(year == 1952),
+    aes(label = country),
+    direction = "x",
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text_repel(
+    data = gap_slope_long |> filter(year == 2007),
+    aes(label = country),
+    direction = "x",
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme(plot.margin = margin(10, 60, 10, 60))
+
+```
+

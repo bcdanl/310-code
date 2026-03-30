@@ -344,8 +344,5 @@ avg_electric_range |>
   ) +
   
   scale_color_manual(values = c( "grey", "maroon"))
-  theme_ipsum() 
-  
-  
-  
+  theme_ipsum()
 ```
