@@ -1,0 +1,450 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-04-01
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r}
+# install.packages(c(
+#   "ggalluvial", "GGally", "ggcorrplot", "tidytext", "ggwordcloud"
+# ))
+# 
+# remotes::install_github("ricardo-bion/ggradar")
+# remotes::install_github("https://github.com/davidsjoberg/ggstream")
+library(scales)
+library(ggstream)
+library(ggalluvial)
+library(ggradar)
+library(GGally)
+library(ggcorrplot)
+library(tidytext)
+library(ggwordcloud)
+
+library(tidyverse)
+library(gapminder)
+library(hrbrthemes)
+library(ggthemes)
+
+eia <- read_csv("https://bcdanl.github.io/data/danl-310-s26-midterm-q4.csv") 
+
+titanic <- read_csv("https://bcdanl.github.io/data/titanic_cleaned.csv") |>
+  mutate(survived = if_else(survived, "Survived", "Did not\n survive"))
+
+org <- socviz::organdata 
+
+netflix <- read_csv("https://bcdanl.github.io/data/netflix_cleaned.csv")
+```
+
+
+# Dumbbell Chart
+
+```{r}
+gap_dumbbell <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), continent == "Asia") |>
+  select(country, year, lifeExp) |>
+  pivot_wider(names_from = year,
+              values_from = lifeExp,
+              names_prefix = "year_") |>
+  mutate(change = year_2007 - year_1952) |>
+  slice_max(change, n = 12) |>
+  arrange(change) |>
+  mutate(country = fct_inorder(country))
+```
+
+
+
+# Slope Graphs
+
+```{r}
+
+gapminder <- gapminder::gapminder 
+gap_slope <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), 
+         country %in% c("United States", "Canada", "Japan") | 
+           str_detect(country, "Korea")) |>
+  select(country, year, gdpPercap) |>
+  mutate(year = factor(year)) |>
+  group_by(country) |>
+  summarize(
+    `1952` = gdpPercap[year == "1952"],
+    `2007` = gdpPercap[year == "2007"]) |>
+  ungroup() |> 
+  mutate(change = `2007` - `1952`) |>
+  slice_max(change, n = 12)
+
+gap_slope_long <- gap_slope |>
+  pivot_longer(cols = c(`1952`, `2007`),
+               names_to = "year", values_to = "gdpPercap")
+
+```
+
+
+
+
+```{r}
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, group = country, color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "1952"),
+    aes(label = country),
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = gap_slope_long |> filter(year == "2007"),
+    aes(label = country),
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme_fivethirtyeight() +
+  theme(plot.margin = margin(10, 60, 10, 60)) 
+  
+```
+
+
+
+
+# Integer Year
+
+
+```{r}
+
+gapminder <- gapminder::gapminder 
+gap_slope <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), 
+         country %in% c("United States", "Canada", "Japan") | 
+           str_detect(country, "Korea")) |>
+  select(country, year, gdpPercap) |>
+  # mutate(year = factor(year)) |>
+  group_by(country) |>
+  summarize(
+    `1952` = gdpPercap[year == 1952],
+    `2007` = gdpPercap[year == 2007]) |>
+  ungroup() |> 
+  mutate(change = `2007` - `1952`) |>
+  slice_max(change, n = 12)
+
+gap_slope_long <- gap_slope |>
+  pivot_longer(cols = c(`1952`, `2007`),
+               names_to = "year", values_to = "gdpPercap")
+
+```
+
+
+
+
+```{r}
+ggplot(data = gap_slope_long,
+       aes(x = year, y = gdpPercap, group = country, color = country)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_point(size = 3, show.legend = FALSE) +
+  geom_text(
+    data = gap_slope_long |> filter(year == 1952),
+    aes(label = country),
+    hjust = 1,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = gap_slope_long |> filter(year == 2007),
+    aes(label = country),
+    hjust = -0.2,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  labs(
+    x = NULL,
+    y = "GDP per capita",
+    title = "Slope graph: GDP per capita in 1952 vs 2007",
+    subtitle = "Selected European countries",
+    caption = "Data: gapminder"
+  ) +
+  theme_fivethirtyeight() +
+  theme(plot.margin = margin(10, 60, 10, 60)) 
+  
+```
+
+
+```{r}
+ggplot(eia,
+       aes(x = mon_yr,
+           y = retail_price_decomposed,
+           fill = component)) +
+  geom_area(alpha = 0.9) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(
+    x = NULL,
+    y = "Dollar contribution",
+    fill = "Component",
+    title = "Gasoline price components over time",
+    subtitle = "Monthly EIA gas pump components"
+  )
+```
+
+
+
+
+
+```{r}
+ggplot(eia,
+       aes(x = mon_yr,
+           y = retail_price_decomposed,
+           fill = component)) +
+  ggstream::geom_stream(type = "ridge", 
+                        bw = 0.6, 
+                        extra_span = 0.1) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(
+    x = NULL,
+    y = "Smoothed contribution",
+    fill = "Component",
+    title = "Stream graph: gasoline price components",
+    subtitle = "A stream graph emphasizes flow more than precise magnitudes"
+  )
+```
+
+# Alluvial
+
+```{r}
+#| fig-height: 8
+#| fig-width: 10
+
+titanic_alluvial <- titanic |>
+  count(class, gender, survived)
+
+ggplot(
+  titanic_alluvial,
+  aes(axis1 = class, 
+      axis2 = gender, 
+      axis3 = survived, y = n)
+) +
+  geom_alluvium(aes(fill = survived), alpha = 0.8) +
+  geom_stratum(width = 0.2, color = "gray40", fill = "gray80",
+               alpha = .75) +
+  geom_text(stat = "stratum", 
+            aes(label = after_stat(stratum)), 
+            size = 4) +
+  scale_x_discrete(limits = c("Class", "Gender", "Survival"), 
+                   expand = c(.1, .1)) +
+  labs(
+    x = NULL, fill = NULL,
+    y = "Count",
+    title = "Titanic passengers",
+    subtitle = "Flow from class to gender to survival"
+  )
+```
+
+
+```{r}
+
+??organdata
+org_radar <- socviz::organdata |>
+  filter(!is.na(consent_law)) |>
+  group_by(consent_law) |>
+  summarize(
+    donors = mean(donors, na.rm = TRUE),
+    gdp = mean(gdp, na.rm = TRUE),
+    health = mean(health, na.rm = TRUE),
+    roads = mean(roads, na.rm = TRUE),
+    txp_pop = mean(txp_pop, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(consent_law = as.character(consent_law)) 
+
+
+org_radar_final <- org_radar |>
+  mutate(across(-consent_law, ~ rescale(.x, to = c(0, 1))))
+```
+
+
+# Scatterplot matrices
+
+```{r}
+org_small <- socviz::organdata |>
+  select(donors, gdp, health, roads, 
+         cerebvas, consent_law) |>
+  drop_na()  # drop obs. with NA
+
+GGally::ggpairs(
+  org_small,
+  columns = 1:5,
+  mapping = aes(color = consent_law, 
+                alpha = 0.6)
+) +
+  scale_color_colorblind() +
+  scale_fill_colorblind()
+```
+
+
+```{r}
+# custom function `my_scatter` 
+#   for scatterplot w/ a fitted line
+my_scatter <- function(data, mapping, ...){
+  ggplot(data = data, mapping = mapping) + 
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method=lm, 
+                se=FALSE, ...)
+}
+
+ggpairs(org_small, 
+        columns = 1:5,
+        mapping = aes(color = consent_law, 
+                      alpha = 0.6),
+        lower = list(continuous = my_scatter)
+  ) +
+  scale_color_colorblind() +
+  scale_fill_colorblind()
+```
+
+
+```{r}
+org_heat <- socviz::organdata |>
+  filter(!is.na(donors), !is.na(year)) |>
+  group_by(country, year) |>
+  summarize(donors = mean(donors)) |> 
+  ungroup()
+
+ggplot(org_heat,
+       aes(x = year, 
+           y = country,
+           # y = fct_reorder(country, donors, .fun = mean), 
+           fill = donors)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  guides(
+    fill = guide_colorbar(
+      barwidth = unit(.6, "cm"),
+      barheight = unit(8, "cm")
+  )) +
+  labs(
+    x = NULL,
+    y = NULL,
+    fill = "Donors",
+    title = "Organ donor rates by country and year",
+    subtitle = "Color represents the donor rate"
+  )
+```
+
+# Cor Heatmap
+
+```{r}
+org_cor <- socviz::organdata |>
+  select(donors, gdp, health,
+         roads, cerebvas, pubhealth) |>
+  drop_na() |>
+  cor()
+
+class(org_cor)
+
+ggcorrplot(
+  org_cor,
+   method = "square",
+   type = "lower",
+   lab = TRUE,
+   lab_size = 2.5,
+   colors = c("#4E79A7",
+              "white",
+              "#E15759"),
+   title = "Organ Donation Variables:\nCorrelation Matrix"
+)
+
+
+```
+```{r}
+p_mat <- socviz::organdata |>
+    select(donors, gdp, health,
+           roads, cerebvas, pubhealth) |>
+    drop_na() |> 
+    cor_pmat()
+
+p_mat
+ggcorrplot(
+  org_cor,
+  type = "lower",
+  p.mat = p_mat,
+  insig = "blank",
+  lab = TRUE,
+  lab_size = 4.5,
+  colors = c("#E15759",
+             "white",
+             "#4E79A7"),
+  title = "Correlation Matrix\n(Insignificant cells blanked)"
+)
+```
+
+
+```{r}
+tidytext::stop_words
+```
+
+
+
+```{r}
+
+netflix
+netflix_words <- netflix |>
+  mutate(
+    description = str_remove_all(description, "<[^>]+>"),   # remove HTML tags
+    description = str_remove_all(description, "http[s]?://\\S+"), # remove URLs
+    description = str_remove_all(description, "&amp;|&lt;|&gt;"), # remove common HTML entities
+    description = str_replace_all(description, "[^a-z\\s]", " "), # keep only letters/spaces
+    description = str_squish(description)  # trim ends and collapse repeated whitespace into single spaces
+  ) |>
+  separate_rows(genre, sep = ",\\s*") |> # separete() + pivot_longer()
+  unnest_tokens(word, description) |>
+  anti_join(stop_words, by = "word") |>
+  filter(str_detect(word, "[a-z]")) |>
+  
+  count(genre, word, sort = TRUE) |> 
+  group_by(genre) |>
+  mutate(tot = sum(n())) |> 
+  ungroup() |> 
+  filter(dense_rank(-tot) <= 4) |>
+  group_by(genre) |>
+  slice_max(n, n = 30)
+```
+
+
+```{r}
+
+```
+
+
+
+
