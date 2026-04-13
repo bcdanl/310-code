@@ -1,0 +1,685 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-04-08
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r}
+# install.packages(c(
+#   "ggalluvial", "GGally", "ggcorrplot", "tidytext", "ggwordcloud"
+# ))
+# 
+# remotes::install_github("ricardo-bion/ggradar")
+# remotes::install_github("https://github.com/davidsjoberg/ggstream")
+library(scales)
+library(ggstream)
+library(ggalluvial)
+library(ggradar)
+library(GGally)
+library(ggcorrplot)
+library(tidytext)
+library(ggwordcloud)
+
+library(tidyverse)
+library(gapminder)
+library(hrbrthemes)
+library(ggthemes)
+```
+
+
+# Classwork 10 - Advanced ggplot Charts
+
+
+## Question 1. Dumbbell Charts
+
+```{r}
+library(gapminder)
+# unique(gapminder$continent)
+gap_dumbbell <- gapminder::gapminder |>
+  filter(year %in% c(1952, 2007), continent == "Americas") |> 
+  select(continent, country, year, lifeExp) |> 
+  pivot_wider(
+    names_from = year,
+    values_from = lifeExp
+  ) |> 
+  mutate(change = `2007` - `1952`) |>
+  arrange(change)
+```
+
+```{r, fig.height=8, fig.width=6, warning=FALSE}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: false
+ggplot(gap_dumbbell, aes(y = fct_reorder(country,`1952`))) +
+  geom_segment(aes(x = `1952`,
+                   xend = `2007`,
+                   yend = country),
+               linewidth = 1,
+               color = "gray70",
+               linetype = 2,
+               fill = "grey85") +
+ geom_segment(aes(x = `1952`,
+                   xend = `2007`,
+                   yend = country),
+               linewidth = 1,
+               color = "gray70",
+               linetype = 1,
+               fill = "black",
+               alpha = .65) +
+  geom_point(aes(x = `1952`),color = "steelblue",size = 2) +
+             # size = 2, color = "steelblue") +
+  geom_point(aes(x = `2007`),color = "darkorange",size = 2) +
+             # size = 2, color = "darkorange") +
+  labs(
+    x = "Life expectancy (in years)",
+    y = NULL,
+    title = "Life expectancy in 1952 vs 2007",
+    subtitle = "Americas",
+    caption = "source: gapminder"
+  ) +
+  scale_color_manual(
+    # name = "year", # Legend Title
+    values = c("1952" = "steelblue",
+               "2007" = "darkorange")
+    ) +
+  theme_ipsum() +
+  theme(
+    #plot.title = element_text(family = "Times New Roman"),
+    plot.subtitle = element_text(
+      #family = "Times New Roman", 
+      face = "italic"),
+    legend.position = "top",
+    # axis.title.x = margin(0,1,0,0)
+    axis.title.x = element_text(hjust = .5),
+    plot.caption = element_text(size = 6)
+  ) 
+```
+
+```{r, fig.height=8, fig.width=7, warning=FALSE}
+ggplot(gap_dumbbell, aes(y = fct_reorder(country, `1952`))) +
+  geom_segment(aes(x = `1952`, xend = `2007`, yend = country),
+               linewidth = 1, color = "gray70", linetype = 2) +
+  geom_segment(aes(x = `1952`, xend = `2007`, yend = country),
+               linewidth = 1, color = "gray45", linetype = 1, alpha = .65) +
+  geom_point(aes(x = `1952`, color = "1952"), size = 2) +
+  geom_point(aes(x = `2007`, color = "2007"), size = 2) +
+  scale_color_manual(
+    name = NULL,
+    values = c("1952" = "steelblue", "2007" = "darkorange")
+  ) +
+  labs(
+    x = "Life expectancy (in years)",
+    y = NULL,
+    title = "Life expectancy in 1952 vs 2007",
+    subtitle = "Americas",
+    caption = "source: gapminder"
+  ) +
+  theme_ipsum() +
+  theme(
+    plot.subtitle = element_text(face = "italic"),
+    legend.position = "inside",
+    legend.position.inside = c(1, 1),
+    legend.justification = c(1, -0.25),
+    legend.box.background = element_rect(color = "white"),
+    legend.text.position = "bottom",
+    legend.direction = "horizontal",
+    legend.background = element_blank(),
+    axis.title.x = element_text(hjust = .5),
+    plot.caption = element_text(size = 6)
+  )
+```
+
+
+![](images/CW10_Q1.png)
+
+
+
+## Question 2. Sloph Charts
+
+```{r}
+gap_slope <- gapminder |>
+  filter(year %in% c(1952, 2007), 
+         country %in% c("United States", "Canada", "Japan") | 
+           str_detect(country, "Korea")) |>
+  select(country, year, gdpPercap) |>
+  mutate(year = factor(year)) |>
+  group_by(country) |>
+  summarize(
+    `1952` = gdpPercap[year == "1952"],
+    `2007` = gdpPercap[year == "2007"]) |>
+  ungroup() |> 
+  mutate(change = `2007` - `1952`) |>
+  slice_max(change, n = 12)
+
+gap_slope_long <- gap_slope |>
+  pivot_longer(cols = c(`1952`, `2007`),
+               names_to = "year", values_to = "gdpPercap")
+```
+
+```{r}
+gap_slope <- gapminder |> # Create Data Frame
+  filter(
+    year %in% c(1992, 1997, 2002, 2007), # Only use the years we need 
+    country %in% c("United States", "Canada", "Puerto Rico",
+                   "Mexico", "Nicaragua", "El Salvador") # Filter to only have the countries we need for the plot
+  ) |>
+  select(country, year, lifeExp) |> # Pinpoint the 3 columns needed 
+  mutate(year = factor(year)) |> # Create the variable 
+  group_by(country) |> # Do calculations to each country separately 
+  summarize(
+    `1992` = lifeExp[year == "1992"],
+    `1997` = lifeExp[year == "1997"],
+    `2002` = lifeExp[year == "2002"],
+    `2007` = lifeExp[year == "2007"]
+  ) |> # Creates the columns per country and year
+  ungroup() |> # Remove the grouping
+  mutate(change = `2007` - `1992`) # Adds a column to show the change in the data needed 
+
+gap_slope_long <- gap_slope |> # Convert it to include all the data 
+  pivot_longer(
+    cols = c(`1992`, `1997`, `2002`, `2007`),
+    names_to = "year",
+    values_to = "lifeExp"
+  ) # Reshape the data for easier use 
+
+```
+
+```{r}
+ggplot(data = gap_slope_long, 
+       aes(x = year, y = lifeExp, group = country, color = country)) +  # Set up the basic plot: x = year, y = life expectancy, group by country, color by country
+  geom_line(linewidth = 1.2, show.legend = FALSE) +  # Draw lines connecting the points for each country, hide legend
+
+  geom_label(
+    aes(label = round(lifeExp, 0)),  # Add numbers inside the lines (life expectancy), rounded to 0 decimals
+    size = 3.5,                      # Size of the text
+    fill = "grey90",                  # Background color of the label
+    color = "black",                  # Text color
+    label.size = 0,                   # Remove the border around the label
+    vjust = 0.5                       # Vertically center the text within the label
+  ) +
+   geom_segment(
+    data = gap_slope_long |> filter(year == "1992"),
+    aes(
+      x = 0.85,          # slightly left of 1992 (which is position 1)
+      xend = 1,           # connect to the 1992 point
+      y = lifeExp,
+      yend = lifeExp
+    ),
+    color = "grey50",
+    linewidth = 0.6,
+    inherit.aes = FALSE
+  ) +
+
+  # RIGHT connecting lines (from 2007 point to country name)
+  geom_segment(
+    data = gap_slope_long |> filter(year == "2007"),
+    aes(
+      x = 4,              # 2007 position
+      xend = 4.15,        # slightly to the right
+      y = lifeExp,
+      yend = lifeExp
+    ),
+    color = "grey50",
+    linewidth = 0.6,
+    inherit.aes = FALSE
+  ) +
+  # Country labels on the left (1992)
+  geom_text(
+    data = gap_slope_long |> filter(year == "1992"),  # Only use 1992 data for left labels
+    aes(label = country),                              # Text = country name
+    hjust = 1,                                        # Align text to the right
+    nudge_x = -0.15,                                  # Move text slightly to the left of the line
+    size = 3,                                         # Smaller text size
+    fontface = "bold",                                # Make text bold
+    show.legend = FALSE                               # Do not show this in the legend
+  ) +
+
+  # Country labels on the right (2007)
+  geom_text(
+    data = gap_slope_long |> filter(year == "2007"),  # Only use 2007 data for right labels
+    aes(label = country),                              # Text = country name
+    hjust = -0.2,                                     # Align text slightly left (to keep space)
+    nudge_x = 0.15,                                   # Move text slightly to the right of the line
+    size = 3,                                         # Smaller text size
+    fontface = "bold",                                # Make text bold
+    show.legend = FALSE                               # Do not show this in the legend
+  ) +
+
+  scale_color_manual(values = c(                       # Manually set line colors for each country
+    "Canada" = "dodgerblue3",
+    "Puerto Rico" = "chartreuse4",
+    "United States" = "yellow3",
+    "Mexico" = "brown2",
+    "El Salvador" = "darkorange",
+    "Nicaragua" = "aquamarine3"
+  )) +
+
+  scale_x_discrete(position = "top") +                 # Move the x-axis labels (years) to the top
+  coord_cartesian(clip = "off") +                      # Allow labels to extend beyond plot edges
+
+  labs(
+    x = NULL,                                          # Remove x-axis label
+    y = NULL,                                          # Remove y-axis label
+    title = "Life Expectancy by Country",             # Main title
+    subtitle = "Selected American countries",        # Subtitle
+    caption = "source: gapminder"                     # Caption/source
+  ) +
+
+  theme(
+    legend.position = "none",                          # Remove legend
+    plot.margin = margin(10, 120, 10, 120),           # Add extra space on left/right for labels
+
+    panel.background = element_rect(fill = "grey90", color = NA),  # Panel background
+    plot.background = element_rect(fill = "grey90", color = NA),   # Plot background
+
+    panel.grid.major = element_blank(),                # Remove major grid lines
+    panel.grid.minor = element_blank(),                # Remove minor grid lines
+
+    axis.text.y = element_blank(),                     # Remove y-axis numbers
+    axis.ticks.y = element_blank(),                    # Remove y-axis ticks
+    axis.ticks.x = element_blank(),                    # Remove x-axis ticks (years on top)
+
+    axis.text.x = element_text(                        # Customize x-axis text
+      face = "bold",                                   # Bold x-axis text
+      size = rel(2)                                    # Make it larger relative to default
+    ),
+
+    plot.title = element_text(                         # Customize title
+      hjust = 0.5,                                     # Center horizontally
+      face = "bold"                                    # Bold title
+    ),
+
+    plot.subtitle = element_text(                      # Customize subtitle
+      hjust = 0.5,                                     # Center horizontally
+      face = "italic"                                  # Italic subtitle
+    )
+  )
+```
+
+
+
+
+## Question 3. Area Charts
+
+```{r}
+pop <- read_csv("https://bcdanl.github.io/data/us_population_age_group_5yr_1900_2024_long.csv")
+
+pop$age_group <- factor(pop$age_group, levels = rev(unique(pop$age_group)))
+
+pop <- pop |>
+  filter(age_group != "all",
+         sex == "both")
+
+ggplot(pop,
+       aes(x = year,
+           y = population / 1000,
+           fill = fct_rev(age_group))) +
+  geom_area(alpha = 0.9) +
+  scale_x_continuous(breaks = seq(1900, 2024, by = 10))+
+  scale_y_continuous(labels = label_comma()) +
+  scale_fill_viridis_d()+
+  labs(
+    x = "Year",
+    y = "Population (in thousands)",
+    fill = "Age Group",
+    title = "US Population by age",
+    subtitle = "1900 to 2024",
+    caption = "Source: U.S. Census Bureau"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(face = "italic")
+   )
+
+```
+
+
+
+
+
+## Question 4. Stream Charts
+
+```{r}
+pop <- read_csv("https://bcdanl.github.io/data/us_population_age_group_5yr_1900_2024_long.csv")
+pop_filtered <- pop %>% 
+  filter(sex != "both",
+         age_group != "all")
+
+ggplot(pop_filtered,
+       aes(x = year,
+           y = population,
+           fill = age_group)) +
+  geom_stream(
+    bw = 0.6, 
+    type = "mirror"
+  ) +
+  facet_wrap(~ sex, scales = "free_x", nrow = 1) +
+  scale_fill_viridis_d(option = "magma") +
+  # scale_fill_brewer(palette = "Spectral", direction = -1) +
+  scale_x_continuous(
+    breaks = seq(1920, 2020, 20),
+    expand = c(0, 0)
+  ) +
+  labs(
+    x = "Year",
+    y = NULL, 
+    fill = "Age_Group",
+    title = "US Population by age and sex",
+    subtitle = "1900 to 2024"
+  )
+
+```
+
+
+
+
+## Question 5. Alluvial Diagrams
+
+```{r}
+mtcars <- datasets::mtcars
+
+df <- mtcars %>% 
+  count(carb, cyl, gear, am) %>% 
+  mutate(am= factor(am, levels=c(0,1), labels = c("Auto", "Man")))
+ggplot(df, aes(y=n, axis1=carb, axis2=cyl, axis3=gear, axis4=am))+
+  geom_alluvium(aes(fill = carb),alpha = 0.5, color= "grey10")+
+  geom_stratum(width = 0.4, color = "gray40", fill="grey95", alpha=.9)+
+  geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 4)+
+  scale_y_continuous(expand = c(0,0), breaks = c(0, 10, 20, 30))+
+  scale_x_discrete(limits=c("Carburetors", "Cylinders", "Gears", "Transmission"), expand = c(0,0)) +
+  scale_fill_viridis_c()+
+  guides(fill="none")+
+  labs(
+    x = NULL, fill = NULL,
+    y = "Frequency",
+    title = "mtcars data",
+    subtitle = "stratified by carb, cyl, gear, and am"
+  )+
+  theme_minimal()+
+  theme(
+    axis.title.y = element_text(size = 14), 
+    axis.text.x = element_text(size=12),
+    plot.title = element_text(face = "bold")  
+  )
+
+```
+
+
+
+
+## Question 6. Heatmaps
+
+```{r}
+
+plot_data <- gapminder %>%
+  filter(continent == "Americas")
+
+ggplot(plot_data, aes(x = year, y = country, fill = lifeExp)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "magma") 
+  labs(title = "Life Expectancy in the Americas",
+       x = "Year",
+       y = "Country",
+       fill = "Years") +
+  theme_minimal()
+```
+
+
+
+## Question 7. Correlation Heatmaps
+
+```{r}
+nba_players <- read_csv("https://bcdanl.github.io/data/nba_players_2022-23_2024-25.csv")
+
+nba_cor <- nba_players |>
+  select("salary", "g", "gs",
+         "mp", "fg", "fga",
+         "fg%", "3p", "3pa",
+         "3p%", "2p", "2pa",
+         "2p%", "efg%", "ft",
+         "fta", "ft%", "orb",
+         "drb", "trb", "ast",
+         "stl", "blk", "tov",
+         "pf", "pts") |>
+  drop_na() |>
+  cor()
+
+p_mat <- nba_players |>
+  select("salary", "g", "gs",
+         "mp", "fg", "fga",
+         "fg%", "3p", "3pa",
+         "3p%", "2p", "2pa",
+         "2p%", "efg%", "ft",
+         "fta", "ft%", "orb",
+         "drb", "trb", "ast",
+         "stl", "blk", "tov",
+         "pf", "pts") |>
+  drop_na() |>
+  cor_pmat()
+
+ggcorrplot(
+  nba_cor,
+  method = "square",
+  type = "lower",
+  p.mat = p_mat,
+  insig = "blank",
+  lab = TRUE,
+  lab_size = 2,
+  colors = c("#4E79A7",
+             "white",
+             "#E15759"),
+  title = "NBA Player Variables: Correlation Matrix"
+)
+```
+
+
+
+
+## Question 8. Word Cloud
+
+### Data
+
+```{r}
+x_cc_neg_weak <- read_csv("https://bcdanl.github.io/data/UStweets_negative_weak_2017.csv")
+x_cc_neg_strong <- read_csv("https://bcdanl.github.io/data/UStweets_negative_strong_2017.csv")
+
+# x_cc_neg_weak: tweets with weakly negative sentiment
+# x_cc_neg_strong: tweets with strongly negative sentiment
+
+# DT::datatable(x_cc_neg_weak)
+# DT::datatable(x_cc_neg_strong)
+```
+
+### Text cleaning
+
+```{r}
+custom_remove <- c("climatechange", "globalwarming", "rt", "climate", "ll", "don")
+
+  weak_top30 <- x_cc_neg_weak %>%
+  
+  # Remove any web links that start with http or https.
+  # Example: "https://something.com"
+  mutate(content = str_remove_all(content, "http[s]?://\\S+")) %>%
+  
+  # Remove Twitter image links specifically, such as pic.twitter.com/xxxxx
+  mutate(content = str_remove_all(content, "pic\\.twitter\\.com/\\S+")) %>%
+  
+  # Replace anything that is NOT a letter or a space with a blank space.
+  # This removes punctuation, numbers, symbols, emojis, etc.
+  mutate(content = str_replace_all(content, "[^A-Za-z\\s]", " ")) %>%
+  
+  # Clean up spacing by shrinking repeated spaces into one space
+  # and trimming extra spaces at the beginning/end.
+  mutate(content = str_squish(content)) %>%
+  
+  # Break the text in the content column into individual words.
+  # The new word column will hold one token (one word) per row.
+  unnest_tokens(word, content) %>%
+  
+  # Remove common stop words like "the", "and", "is", etc.
+  # This helps keep only more meaningful words.
+  anti_join(stop_words, by = "word") %>%
+  filter(!word %in% custom_remove) %>%
+  
+  # Keep only words made of lowercase letters a-z.
+  # This helps filter out weird leftovers or broken tokens.
+  filter(str_detect(word, "^[a-z]+$")) %>%
+  count(word, sort = TRUE) %>%
+  slice_head(n = 30)
+  
+  strong_top30 <- x_cc_neg_strong %>%
+  mutate(content = str_remove_all(content, "http[s]?://\\S+")) %>%
+  mutate(content = str_remove_all(content, "pic\\.twitter\\.com/\\S+")) %>%
+  mutate(content = str_replace_all(content, "[^A-Za-z\\s]", " ")) %>%
+  mutate(content = str_squish(content)) %>%
+  unnest_tokens(word, content) %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(!word %in% custom_remove) %>%
+  filter(str_detect(word, "^[a-z]+$")) %>%
+  count(word, sort = TRUE) %>%
+  slice_head(n = 30)
+```
+
+### Word Clouds
+
+```{r}
+ggplot(weak_top30, aes(label = word, size = n, color = n)) +
+  geom_text_wordcloud() +
+  scale_size_area(max_size = 18) +
+  scale_color_viridis_c() +
+  labs(
+    title = "US tweets in 2017 with #climatechange or #globalwarming",
+    subtitle = "Weakly negative sentiments"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+ggplot(strong_top30, aes(label = word, size = n, color = n)) +
+  geom_text_wordcloud() +
+  scale_size_area(max_size = 18) +
+  scale_color_viridis_c() +
+  labs(
+    title = "US tweets in 2017 with #climatechange or #globalwarming",
+    subtitle = "Strongly negative sentiments"
+  ) +
+  theme_minimal()
+```
+
+
+
+
+### Josh
+
+#### Preparing Words DataFrame
+
+##### Weakly Negative Sentiments
+
+```{r}
+x_words_neg_weak <- x_cc_neg_weak %>% 
+  filter(str_detect(content, regex("#climatechange|#globalwarming", ignore_case = TRUE))) %>% 
+  mutate(
+    content = str_remove_all(content, "http[s]?://\\S+"),
+    content = str_remove_all(content, "pic.twitter.com/\\S+"),
+    content = str_remove_all(content, "t.co/\\S+"),
+    content = str_replace_all(content, "'s|'re|'ve|'ll|'d|'t", ""),
+    content = str_replace_all(content, "[^A-Za-z\\s]", " "),
+    content = str_squish(content)
+  ) %>% 
+  unnest_tokens(word, content) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(!word %in% c(
+    "climatechange", "globalwarming", "rt", "climate"
+  )) %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  count(word, sort = TRUE) %>% 
+  slice_max(n, n = 30)
+```
+
+##### Weakly Negative Sentiments Plot
+
+```{r}
+x_words_neg_weak %>% 
+  ggplot(aes(label = word,
+             size = n,
+             color = n)) +
+  geom_text_wordcloud_area(
+    shape = "square",
+    grid_size = 1) +
+  scale_size_area(max_size = 30) +
+  theme_minimal()+
+  theme(
+    strip.text = element_text(face = "bold")
+  ) +
+  scale_color_viridis_b()
+```
+
+##### Strongly Negative Sentiments
+
+```{r}
+x_words_neg_strong <- x_cc_neg_strong %>% 
+  filter(str_detect(content, regex("#climatechange|#globalwarming", ignore_case = TRUE))) %>% 
+  mutate(
+    content = str_remove_all(content, "http[s]?://\\S+"),
+    content = str_remove_all(content, "pic.twitter.com/\\S+"),
+    content = str_remove_all(content, "t.co/\\S+"),
+    content = str_replace_all(content, "'s|'re|'ve|'ll|'d|'t", ""),
+    content = str_replace_all(content, "[^A-Za-z\\s]", " "),
+    content = str_squish(content)
+  ) %>% 
+  unnest_tokens(word, content) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(!word %in% c(
+    "climatechange", "globalwarming", "rt", "climate"
+  )) %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  count(word, sort = TRUE) %>% 
+  slice_max(n, n = 30)
+```
+
+##### Strongly Negative Sentiments plot
+
+```{r}
+x_words_neg_strong %>% 
+  ggplot(aes(label = word,
+             size = n,
+             color = n)) +
+  geom_text_wordcloud_area(
+    shape = "square",
+    grid_size = 1) +
+  scale_size_area(max_size = 30) +
+  theme_minimal()+
+  theme(
+    strip.text = element_text(face = "bold")
+  ) +
+  scale_color_viridis_c(option = "plasma")
+```
+
+
+
+
+
