@@ -1,0 +1,742 @@
+---
+title: Class Script
+subtitle: "DANL 310: Data Visualization and Presentation"
+author:
+  - name: Byeong-Hak Choe
+    affiliation: SUNY Geneseo
+    
+date: 2026-04-15
+
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  fig-width: 10
+  fig-height: 6
+
+
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-title: "Contents"
+    toc-expand: 3
+    number-sections: true
+    code-tools: true
+    highlight-style: atom-one
+---
+
+```{r}
+# install.packages(c(
+#   "ggalluvial", "GGally", "ggcorrplot", "tidytext", "ggwordcloud"
+# ))
+# 
+# remotes::install_github("ricardo-bion/ggradar")
+# remotes::install_github("https://github.com/davidsjoberg/ggstream")
+library(scales)
+library(ggstream)
+library(ggalluvial)
+library(ggradar)
+library(GGally)
+library(ggcorrplot)
+library(tidytext)
+library(ggwordcloud)
+
+library(tidyverse)
+library(gapminder)
+library(hrbrthemes)
+library(ggthemes)
+```
+
+
+```{r}
+socviz::election |> select(state, total_vote,
+                           r_points, pct_trump, party, census)
+```
+
+
+```{r}
+election <- read_csv("https://bcdanl.github.io/data/election_state_2024.csv")
+election
+```
+
+```{r}
+election24 <- socviz::election24
+```
+
+```{r}
+library(socviz)
+```
+
+
+```{r}
+party_colors <- c("#2E74C0", "#CB454A")  # Hex color codes for Dem Blue and Rep Red
+p0 <- ggplot(data = filter(election, st != "DC"),
+             mapping = aes(x = r_points,
+                           y = fct_reorder(state, r_points),
+                           color = party))
+```
+
+
+```{r}
+p1 <- p0 + 
+  geom_vline(
+    xintercept = 0, 
+    color = "gray30") +
+  geom_point(size = 2) +
+  labs(x = "Point Margin", 
+       y = NULL)
+
+p1
+```
+
+
+
+```{r}
+party_colors <- c("#2E74C0", "#CB454A")  # Hex color codes for Dem Blue and Rep Red
+p0 <- ggplot(data = filter(election24, st != "DC"),
+             mapping = aes(x = r_points,
+                           y = fct_reorder(state, r_points),
+                           color = party))
+```
+
+
+```{r}
+p1 <- p0 + 
+  geom_vline(
+    xintercept = 0, 
+    color = "gray30") +
+  geom_point(size = 2) +
+  labs(x = "Point Margin", 
+       y = NULL)
+
+p1
+```
+
+```{r}
+p2 <- p1 + 
+  scale_color_manual(
+    values = party_colors)
+
+p2
+```
+```{r}
+p3 <- p2 + 
+  scale_x_continuous(
+    breaks = 
+      c(-30, -20, -10, 0, 
+        10, 20, 30, 40),
+    labels = 
+      c("30\n (Clinton)", "20", "10", "0", 
+        "10", "20", "30", "40\n(Trump)")
+    )
+p3
+```
+
+```{r}
+p3 + 
+  facet_wrap(~ census, 
+             ncol=1) +
+  guides(color = "none") + 
+  theme(
+    axis.text = element_text(size=8)
+    )
+```
+
+```{r}
+#| fig-height: 10
+p3 + 
+  facet_wrap(~ census, 
+             ncol=1,
+             scales = "free_y") +
+  guides(color = "none") + 
+  theme(
+    axis.text = element_text(size=8)
+    )
+```
+
+```{r}
+#| fig-height: 10
+# install.package("ggforce")
+library(ggforce)
+
+p3 + 
+  facet_col(~ census, 
+            scales="free_y", 
+            space = "free") +
+  guides(color = "none") + 
+  labs(x = "Point Margin", y = "",
+       title = "Presidential Election in 2024") +
+  theme(axis.text=element_text(size=6),
+        strip.text=
+          element_text(size=rel(.6))
+        )
+```
+
+
+
+
+```{r}
+# install.packages("maps")
+us_states <- map_data("state") # from the 'maps' package
+```
+
+```{r}
+p <- ggplot(
+  data = us_states,
+  mapping = aes(x = long, y = lat,
+                group = group))
+
+p + geom_polygon(
+  fill = "white", 
+  color = "black")
+```
+
+```{r}
+us_states |> 
+  distinct(group, region)
+```
+
+```{r}
+
+us_states |> 
+  distinct(region)
+```
+
+
+```{r}
+p <- ggplot(
+  data = us_states,
+  aes(x = long, y = lat,
+      group = group, 
+      fill = region))
+
+p + 
+  geom_polygon(
+    color = "gray90", 
+    linewidth = 0.1) + 
+  guides(fill = FALSE)
+```
+
+```{r}
+p <- ggplot(
+  data = us_states,
+  mapping = aes(x = long, y = lat,
+                group = group, 
+                fill = region))
+p + geom_polygon(color = "gray90", 
+                 size = 0.1) +
+    coord_map(projection = "albers", 
+              lat0 = 39, lat1 = 45) +
+    guides(fill = FALSE)
+```
+
+```{r}
+election <- election |> 
+  mutate(region = str_to_lower(state))
+
+us_states_elec <- us_states |>
+  left_join(election)
+```
+
+
+```{r}
+p0 <- ggplot(
+  data = us_states_elec,
+  aes(x = long, y = lat,
+      group = group, 
+      fill = party))
+
+p0 + 
+  geom_polygon(
+    color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", 
+              lat0 = 39, lat1 = 45) 
+```
+
+```{r}
+p1 <- p0 + 
+  geom_polygon(color = "gray90", size = 0.1) +
+  coord_map(projection = "albers", 
+            lat0 = 39, lat1 = 45) 
+
+p2 <- p1 + 
+  scale_fill_manual(values = party_colors) +
+  labs(title = "Election Results 2016", 
+       fill = NULL)
+
+p2
+```
+
+```{r}
+p2 + theme_map()
+```
+
+
+
+```{r}
+
+election <- election24 |> 
+  mutate(region = str_to_lower(state))
+
+us_states_elec24 <- us_states |>
+  left_join(election)
+
+p0 <- ggplot(
+  data = us_states_elec24,
+  aes(x = long, y = lat,
+      group = group, 
+      fill = party))
+
+p0 + 
+  geom_polygon(
+    color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", 
+              lat0 = 39, lat1 = 45) 
+
+p1 <- p0 + 
+  geom_polygon(color = "gray90", size = 0.1) +
+  coord_map(projection = "albers", 
+            lat0 = 39, lat1 = 45) 
+
+p2 <- p1 + 
+  scale_fill_manual(values = party_colors) +
+  labs(title = "Election Results 2024", 
+       fill = NULL)
+
+p2 + theme_map()
+```
+
+```{r}
+p0 <- ggplot(
+  data = us_states_elec,
+  mapping = aes(x = long, y = lat, 
+                group = group, 
+                fill = pct_trump))
+
+p1 <- p0 + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", 
+              lat0 = 39, lat1 = 45) 
+
+p1 + labs(title = "Trump vote",
+          fill = "Percent") + 
+  theme_map()
+```
+
+
+
+```{r}
+p2 <- p1 + 
+  scale_fill_gradient(low = "white", 
+                      high = "#CB454A") +
+        labs(title = "Trump vote",
+             fill = "Percent") 
+p2 + theme_map()
+```
+
+```{r}
+p0 <- ggplot(
+  data = us_states_elec,
+  mapping = aes(x = long, y = lat, 
+                group = group, 
+                fill = d_points))
+
+p1 <- p0 + 
+  geom_polygon(color = "gray90", size = 0.1) +
+  coord_map(projection = "albers", 
+            lat0 = 39, lat1 = 45) 
+
+p2 <- p1 + 
+  scale_fill_gradient2() + 
+  labs(title = "Winning margins",
+       fill = "Percent") 
+p2 + theme_map()
+```
+```{r}
+p3 <- p1 + 
+  scale_fill_gradient2(
+    low = "red", 
+    mid = scales::muted("purple"),
+    high = "blue", 
+    breaks = c(-25, 0, 25, 50, 75)) 
+
+p3 + theme_map() + 
+  labs(fill = "Percent", 
+       title = "Winning margins")
+```
+
+
+```{r}
+
+us_states_elec_no_DC <- us_states_elec |> 
+    filter(region != "district of columbia")
+
+p0 <- ggplot(
+  data = us_states_elec_no_DC,
+  aes(x = long, y = lat, 
+      group = group, 
+      fill = d_points))
+
+p3 <- p1 + 
+  scale_fill_gradient2(
+    low = "red", 
+    mid = scales::muted("purple"),
+    high = "blue") 
+p3 + theme_map() + 
+  labs(fill = "Percent", 
+       title = "Winning margins", 
+       caption = "DC is omitted.")
+```
+
+
+```{r}
+# socviz::county_map
+
+county_map <- socviz::county_map
+
+county_data <- 
+  read_csv("https://bcdanl.github.io/data/socviz_county_data.csv")
+
+county_full <- county_map |> 
+  left_join(county_data, 
+            by = c("id" = "fips"))
+```
+
+
+
+```{r}
+p <- ggplot(
+  data = county_full,
+  mapping = aes(x = long, y = lat,
+                fill = pop_dens_disc, 
+                group = group))
+p1 <- p + 
+  geom_polygon(color = "gray90", size = 0.05)
+p1
+```
+
+
+```{r}
+p1 + coord_equal()
+```
+
+
+
+```{r}
+p2 <- p1 + coord_equal() + 
+  scale_fill_brewer(
+  palette = "Blues",
+  labels = c("0-10", "10-50", "50-100", "100-500", "500-1,000", "1,000-5,000", ">5,000"))
+
+p2
+```
+
+
+```{r}
+p2 + labs(fill = "Population per\nsquare mile") +
+  theme_map() +
+  guides(fill = guide_legend(nrow = 1)) + 
+  theme(legend.position = "bottom")
+```
+
+
+```{r}
+p <- ggplot(
+  data = county_full,
+  mapping = aes(x = long, y = lat, 
+                fill = hisp_disc, 
+                group = group))
+p1 <- p + 
+  geom_polygon(color = "gray90", size = 0.05) +
+  coord_equal()
+p2 <- p1 + 
+  scale_fill_brewer(palette="Greens")
+
+p2 + labs(fill = "US Population, Percent Hispanic") +
+  guides(fill = guide_legend(nrow = 1)) + 
+  theme_map() + 
+  theme(legend.position = "bottom")
+```
+
+
+```{r}
+p <- ggplot(
+  data = county_full,
+  mapping = aes(x = long, y = lat, 
+                fill = black_disc, 
+                group = group))
+p1 <- p + 
+  geom_polygon(color = "gray90", size = 0.05) +
+  coord_equal()
+p2 <- p1 + 
+  scale_fill_brewer(palette="Greens")
+
+p2 + labs(fill = "US Population, Percent Black") +
+  guides(fill = guide_legend(nrow = 1)) + 
+  theme_map() + 
+  theme(legend.position = "bottom")
+```
+
+
+```{r}
+orange_pal <- RColorBrewer::brewer.pal(n = 6, name = "Oranges")
+orange_pal
+```
+
+
+```{r}
+orange_rev <- rev(orange_pal)
+orange_rev
+```
+
+
+```{r}
+pop_p <- ggplot(
+  data = county_full,
+  mapping = aes(x = long, y = lat,
+                fill = pop_dens6, 
+                group = group))
+
+pop_p1 <- pop_p + 
+  geom_polygon(color = "black", size = 0.05) +
+  coord_equal()
+
+pop_p2 <- pop_p1 + 
+  scale_fill_manual(values = orange_pal)
+
+pop_p2 + 
+  labs(title = "Population Density",
+      fill = "People per square mile") +
+  theme_map() + 
+  theme(legend.position = "bottom")
+```
+
+```{r}
+pop_p2_rev <- pop_p1 + 
+  scale_fill_manual(values = orange_rev)
+
+pop_p2_rev + 
+  labs(title = "Reverse-coded Population Density",
+       fill = "People per square mile") +
+  theme_map() + 
+  theme(legend.position = "bottom")
+```
+
+
+# Apr 15
+
+```{r}
+# socviz::county_map
+
+county_map <- 
+  read_csv("https://bcdanl.github.io/data/socviz_county_map.csv")
+county_data <- 
+  read_csv("https://bcdanl.github.io/data/socviz_county_data.csv")
+
+county_full <- county_map |> 
+  left_join(county_data, 
+            by = c("id" = "fips"))
+```
+
+
+
+```{r}
+
+county_map <- socviz::county_map
+
+county_data <- 
+  read_csv("https://bcdanl.github.io/data/socviz_county_data.csv")
+
+county_full <- county_map |> 
+  left_join(county_data, 
+            by = c("id" = "fips"))
+
+gop_p <- ggplot(
+  data = county_full,
+  mapping = aes(x = long, y = lat,
+                fill = hispanic/pop,
+                group = group))
+
+gop_p1 <- gop_p + 
+  geom_polygon(color = "gray70", size = 0.05) +
+  coord_equal()
+
+gop_p1
+```
+
+
+```{r}
+
+mean_hisp <- mean(
+  county_full$hispanic / county_full$pop,
+  na.rm = T
+)
+median_hisp <- median(
+  county_full$hispanic / county_full$pop,
+  na.rm = T
+)
+
+gop_p2 <- gop_p1 + 
+  scale_fill_gradient2( 
+    low = '#2E74C0',  # from party_colors for DEM
+    mid = '#FFFFFF',  # transparent white
+    high = '#CB454A',  # from party_colors for GOP
+    na.value = "grey50",
+    midpoint = mean_hisp)
+
+gop_p2 + 
+  labs(title = "Where are Hispanic population in US?",
+       fill = "Percent of Hispanic Population") +
+  theme_map() + 
+  theme(legend.position = "bottom")
+```
+
+
+```{r}
+NY_socioecon_geo_poverty <- read_csv(
+  'https://bcdanl.github.io/data/NY_socioecon_geo_poverty.csv'
+)
+```
+
+```{r}
+p <- ggplot(data = NY_socioecon_geo_poverty,
+            mapping = aes(x = long, y = lat, group = group, 
+                          fill = c04_058 ))
+  
+p1 <- p + geom_polygon(color = "grey", size = 0.1) +
+    coord_map(projection = "albers", lat0 = 39, lat1 = 45) 
+
+p2 <- p1 + 
+  scale_fill_viridis_c(option = "plasma") + 
+  theme_map() 
+p2
+```
+
+
+
+```{r}
+p2 + facet_wrap(~ year, ncol = 3) +
+    theme(legend.position = "bottom",
+          strip.background = element_blank()) +
+    labs(fill = "Poverty rate in NY (%)",
+         title = "Poverty rate for the male population 25 years and over \nfor whom the highest educational attainment is bachelor's degree")
+```
+
+
+```{r}
+election
+```
+
+
+```{r}
+library(statebins)  # install.packages("statebins")
+p <- ggplot(election, aes( state = state, fill = r_points ) )
+p1 <- p +  
+  geom_statebins(lbl_size = 5,
+                 border_col = "grey90", 
+                 border_size = 1)
+p2 <- p1 + 
+  labs(fill = "Percent Margin Trump") +
+  coord_equal() +
+  theme_statebins( legend_position = c(.45, 1) ) +
+  theme( legend.direction="horizontal" )
+p2
+```
+
+```{r}
+p2 + scale_fill_gradient2( 
+  low = '#2E74C0',  # from party_colors for DEM
+  mid = '#FFFFFF',  # transparent white
+  high = '#CB454A',  # from party_colors for GOP
+  na.value = "grey50",
+  midpoint = 0)   # set the midpoint value
+```
+
+```{r}
+p <- ggplot(data = filter(election, st != "DC")  , 
+            mapping = aes(state = state, fill = pct_harris)) 
+p1 <- p + geom_statebins(lbl_size = 5,
+                         border_col = "grey90",
+                         border_size = 1)
+
+p1
+
+
+```
+
+```{r}
+p2 <- p1 + labs(fill = "Percent Harris") +
+  coord_equal() +
+  theme_statebins( legend_position = c(.45, 1) ) +
+  theme( legend.direction="horizontal" )
+p2
+
+p2 + scale_fill_gradient( 
+    low = '#FFFFFF',  # transparent white
+    high = '#2E74C0',  # from party_colors for DEM
+    na.value = "grey50")   # set the midpoint value
+```
+
+```{r}
+p <- ggplot(data = election  , 
+            mapping = aes(state = state, fill = party)) 
+p1 <- p + geom_statebins(lbl_size = 5,
+                         border_col = "grey90",
+                         border_size = 1)
+p1
+```
+
+
+```{r}
+p2 <- p1 + labs(fill = "Winner") +
+  coord_equal() +
+  theme_statebins( legend_position = c(.25, 1) ) +
+  theme( legend.direction="horizontal",
+         legend.title = element_text(size=30),
+         legend.text = element_text(size=30) )
+
+p2 + scale_fill_manual( values = c(Republican = "darkred", 
+                                   Democratic = "royalblue"))
+```
+
+```{r}
+p <- ggplot(data = election  , 
+            mapping = aes(state = state, 
+                          fill=pct_trump)) 
+p1 <- p + geom_statebins(lbl_size = 5,
+                         border_col = "grey90",
+                         border_size = 1)
+
+p1
+```
+
+
+
+```{r}
+p2 <- p1 + labs(fill = "Percent Trump") +
+  coord_equal() +
+  theme_statebins( legend_position = c(.2, 1) ) +
+  theme( legend.direction="horizontal")
+
+p2 + scale_fill_gradient(breaks = c(5, 21, 41, 48, 57),
+                         labels = c("< 5", "5-21", 
+                                    "21-41", "41-58", "> 57"),
+                         low = "#f9ecec", high = "#CB454A") +
+  guides(fill = guide_legend())
+```
+
+
+# Classwork 11
+
+## Part 1
+
+
+## Part 2
+
+
+## Part 3
+
+
+
+
